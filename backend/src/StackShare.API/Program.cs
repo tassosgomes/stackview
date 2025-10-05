@@ -193,4 +193,7 @@ Log.Information("StackShare API starting up");
 
 app.Run();
 
+// Make Program class accessible for integration tests
+public partial class Program { }
+
 
