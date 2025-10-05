@@ -6,11 +6,11 @@
 - [x] 2.0 Banco de Dados e Migrations (EF Core + PostgreSQL, schema inicial) ✅ CONCLUÍDA
 - [x] 3.0 Autenticação e Autorização (Identity + JWT) ✅ CONCLUÍDA
 - [x] 4.0 Feature Stacks (Entidades, CQRS, CRUD, filtros, público/privado) ✅ CONCLUÍDA
-- [ ] 5.0 Feature Tecnologias (pré-cadastro, sugestão, admin CRUD básico)
-- [ ] 6.0 Tokens MCP do Usuário (gerar, listar, revogar, hash)
-- [ ] 7.0 Middleware Global, Validação e Padronização de Respostas
-- [ ] 8.0 Testes Backend (unitários + integração com Testcontainers)
-- [ ] 9.0 Frontend Setup (Vite React TS, Tailwind, Shadcn, Router, React Query, Axios)
+- [x] 5.0 Feature Tecnologias (pré-cadastro, sugestão, admin CRUD básico) ✅ CONCLUÍDA
+- [x] 6.0 Tokens MCP do Usuário (gerar, listar, revogar, hash) ✅ CONCLUÍDA
+- [x] 7.0 Middleware Global, Validação e Padronização de Respostas ✅ CONCLUÍDA
+- [x] 8.0 Testes Backend (unitários + integração com Testcontainers) ✅ CONCLUÍDA
+- [x] 9.0 Frontend Setup (Vite React TS, Tailwind, Shadcn, Router, React Query, Axios) ✅ CONCLUÍDA
 - [ ] 10.0 Frontend Autenticação e Dashboard
 - [ ] 11.0 Frontend Stacks (CRUD, Markdown, filtros e busca)
 - [ ] 12.0 Frontend Tokens MCP (perfil: gerar/revogar)
