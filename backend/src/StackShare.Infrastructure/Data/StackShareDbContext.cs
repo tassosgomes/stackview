@@ -1,11 +1,12 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using StackShare.Application.Interfaces;
 using StackShare.Domain.Entities;
 
 namespace StackShare.Infrastructure.Data;
 
-public class StackShareDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
+public class StackShareDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>, IStackShareDbContext
 {
     public StackShareDbContext(DbContextOptions<StackShareDbContext> options) : base(options)
     {
