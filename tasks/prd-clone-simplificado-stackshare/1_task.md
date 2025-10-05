@@ -19,13 +19,14 @@ blocked_by: []
 Inicializar a solução .NET com projetos API, Application, Domain e Infrastructure. Configurar Serilog para logs e OpenTelemetry para tracing básico.
 
 ## Requisitos
+- Projeto deve ser iniciado na pasta backend
 - Solução com 4 projetos em layout vertical slice
 - Configuração de Serilog e logging estruturado
 - OpenTelemetry adicionada (traces para requests HTTP)
 - Pacotes base (MediatR, FluentValidation, EF Core Npgsql)
 
 ## Subtarefas
-- [ ] 1.1 Criar solução e projetos (API, Application, Domain, Infrastructure)
+- [ ] 1.1 Criar solução e projetos dentro da pasta backend (API, Application, Domain, Infrastructure)
 - [ ] 1.2 Adicionar pacotes NuGet e configurar DI base
 - [ ] 1.3 Configurar Serilog (console e arquivo JSON)
 - [ ] 1.4 Habilitar OpenTelemetry (AspNetCore + HttpClient)

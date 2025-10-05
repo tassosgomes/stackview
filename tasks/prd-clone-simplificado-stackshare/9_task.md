@@ -16,7 +16,7 @@ blocked_by: []
 # Tarefa 9.0: Frontend Setup (Vite React TS, Tailwind, Shadcn, Router, React Query, Axios)
 
 ## Visão Geral
-Inicializar projeto React com TypeScript, Tailwind, Shadcn/ui, roteamento, React Query e Axios configurados.
+Inicializar projeto React com TypeScript, Tailwind, Shadcn/ui, roteamento, React Query e Axios configurados na pasta frontend.
 
 ## Requisitos
 - Vite + React + TS
