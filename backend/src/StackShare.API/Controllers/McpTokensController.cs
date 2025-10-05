@@ -1,4 +1,3 @@
-using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,16 +12,13 @@ public class McpTokensController : ControllerBase
 {
     private readonly IMediator _mediator;
     private readonly ILogger<McpTokensController> _logger;
-    private readonly IValidator<GenerateMcpTokenRequest> _generateValidator;
 
     public McpTokensController(
         IMediator mediator, 
-        ILogger<McpTokensController> logger,
-        IValidator<GenerateMcpTokenRequest> generateValidator)
+        ILogger<McpTokensController> logger)
     {
         _mediator = mediator;
         _logger = logger;
-        _generateValidator = generateValidator;
     }
 
     /// <summary>
@@ -46,13 +42,6 @@ public class McpTokensController : ControllerBase
     public async Task<ActionResult<GenerateMcpTokenResponse>> GenerateMcpToken([FromBody] GenerateMcpTokenRequest request)
     {
         _logger.LogInformation("Generating new MCP token for current user with name: {TokenName}", request.Name);
-
-        // Validate request
-        var validationResult = await _generateValidator.ValidateAsync(request);
-        if (!validationResult.IsValid)
-        {
-            return BadRequest(validationResult.Errors.Select(e => new { Field = e.PropertyName, Error = e.ErrorMessage }));
-        }
 
         var result = await _mediator.Send(request);
 

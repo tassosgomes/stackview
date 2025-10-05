@@ -1,4 +1,3 @@
-using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -45,15 +44,8 @@ public class TechnologiesController : ControllerBase
     /// </summary>
     [HttpPost("suggest")]
     public async Task<ActionResult<SuggestTechnologiesResponse>> SuggestTechnologies(
-        [FromBody] SuggestTechnologiesRequest request,
-        [FromServices] IValidator<SuggestTechnologiesRequest> validator)
+        [FromBody] SuggestTechnologiesRequest request)
     {
-        var validationResult = await validator.ValidateAsync(request);
-        if (!validationResult.IsValid)
-        {
-            return BadRequest(validationResult.Errors);
-        }
-
         _logger.LogInformation("Buscando sugestões para: {Name}", request.Name);
 
         var query = new SuggestTechnologies(request.Name, request.MaxResults);
@@ -68,15 +60,8 @@ public class TechnologiesController : ControllerBase
     [HttpPost]
     [Authorize] // NOTA: Para v1, qualquer usuário autenticado pode criar tecnologias
     public async Task<ActionResult<CreateTechnologyResponse>> CreateTechnology(
-        [FromBody] CreateTechnologyRequest request,
-        [FromServices] IValidator<CreateTechnologyRequest> validator)
+        [FromBody] CreateTechnologyRequest request)
     {
-        var validationResult = await validator.ValidateAsync(request);
-        if (!validationResult.IsValid)
-        {
-            return BadRequest(validationResult.Errors);
-        }
-
         _logger.LogInformation("Criando tecnologia: {Name}", request.Name);
 
         var command = new CreateTechnology(request.Name, request.Description);

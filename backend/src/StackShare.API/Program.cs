@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using FluentValidation;
+using MediatR;
 
 // Configure Serilog
 Log.Logger = new LoggerConfiguration()
@@ -53,6 +54,9 @@ builder.Services.AddControllers();
 
 // Add MediatR
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(StackShare.Application.AssemblyReference).Assembly));
+
+// Add MediatR Pipeline Behaviors
+builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(StackShare.Application.Behaviors.ValidationPipelineBehavior<,>));
 
 // Add FluentValidation
 builder.Services.AddValidatorsFromAssembly(typeof(StackShare.Application.AssemblyReference).Assembly);

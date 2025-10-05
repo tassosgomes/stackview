@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 parallelizable: true
 blocked_by: ["1.0"]
 ---
@@ -24,9 +24,9 @@ Criar middleware para tratamento global de exceções, integração com FluentVa
 - 404 para recursos inexistentes
 
 ## Subtarefas
-- [ ] 7.1 Middleware global de erros
-- [ ] 7.2 Filtro/behavior para validação
-- [ ] 7.3 Documentar formato de erro
+- [x] 7.1 Middleware global de erros ✅ CONCLUÍDA
+- [x] 7.2 Filtro/behavior para validação ✅ CONCLUÍDA  
+- [x] 7.3 Documentar formato de erro ✅ CONCLUÍDA
 
 ## Sequenciamento
 - Bloqueado por: 1.0
