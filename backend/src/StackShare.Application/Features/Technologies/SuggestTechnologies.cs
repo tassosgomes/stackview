@@ -37,11 +37,29 @@ public class SuggestTechnologiesHandler : IRequestHandler<SuggestTechnologies, S
         _logger.LogInformation("Buscando sugestões para tecnologia: {Name}, MaxResults: {MaxResults}", 
             request.Name, request.MaxResults);
 
-        // Buscar todas as tecnologias ativas
-        var allTechnologies = await _context.Technologies
-            .Where(t => t.IsActive)
+        // Buscar tecnologias ativas com limite para performance
+        // Primeiro tenta busca exata/parcial no banco, depois aplica fuzzy matching
+        var dbTechnologies = await _context.Technologies
+            .Where(t => t.IsActive && (
+                t.Name.ToLower().Contains(request.Name.ToLower()) ||
+                request.Name.ToLower().Contains(t.Name.ToLower())
+            ))
             .Select(t => new { t.Id, t.Name, t.Description })
+            .Take(100) // Limita para performance
             .ToListAsync(cancellationToken);
+
+        // Se não encontrou suficientes, busca mais tecnologias para fuzzy matching
+        List<dynamic> allTechnologies = dbTechnologies.Cast<dynamic>().ToList();
+        if (dbTechnologies.Count < request.MaxResults * 2)
+        {
+            var additionalTechs = await _context.Technologies
+                .Where(t => t.IsActive && !dbTechnologies.Select(dt => dt.Id).Contains(t.Id))
+                .Select(t => new { t.Id, t.Name, t.Description })
+                .Take(50) // Mais algumas para fuzzy matching
+                .ToListAsync(cancellationToken);
+            
+            allTechnologies.AddRange(additionalTechs.Cast<dynamic>());
+        }
 
         _logger.LogInformation("Total de tecnologias ativas encontradas: {Count}", allTechnologies.Count);
 

@@ -1,6 +1,7 @@
 using FluentValidation;
 using System.Net;
 using System.Text.Json;
+using StackShare.Domain.Exceptions;
 
 namespace StackShare.API.Middleware;
 
@@ -46,6 +47,11 @@ public class GlobalExceptionMiddleware
 
             case UnauthorizedAccessException:
                 context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                response = new { message = exception.Message };
+                break;
+
+            case TechnologyAlreadyExistsException:
+                context.Response.StatusCode = (int)HttpStatusCode.Conflict;
                 response = new { message = exception.Message };
                 break;
 

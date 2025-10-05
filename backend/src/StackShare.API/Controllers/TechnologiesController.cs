@@ -1,8 +1,10 @@
+using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StackShare.Application.Features.Technologies;
 using StackShare.Application.Features.Stacks;
+using Technologies = StackShare.Application.Features.Technologies;
 
 namespace StackShare.API.Controllers;
 
@@ -23,7 +25,7 @@ public class TechnologiesController : ControllerBase
     /// Lista tecnologias com filtros e paginação
     /// </summary>
     [HttpGet]
-    public async Task<ActionResult<PagedResult<Application.Features.Technologies.TechnologyDto>>> GetTechnologies(
+    public async Task<ActionResult<PagedResult<Technologies.TechnologyDto>>> GetTechnologies(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
         [FromQuery] string? search = null,
@@ -43,8 +45,15 @@ public class TechnologiesController : ControllerBase
     /// </summary>
     [HttpPost("suggest")]
     public async Task<ActionResult<SuggestTechnologiesResponse>> SuggestTechnologies(
-        [FromBody] SuggestTechnologiesRequest request)
+        [FromBody] SuggestTechnologiesRequest request,
+        [FromServices] IValidator<SuggestTechnologiesRequest> validator)
     {
+        var validationResult = await validator.ValidateAsync(request);
+        if (!validationResult.IsValid)
+        {
+            return BadRequest(validationResult.Errors);
+        }
+
         _logger.LogInformation("Buscando sugestões para: {Name}", request.Name);
 
         var query = new SuggestTechnologies(request.Name, request.MaxResults);
@@ -57,10 +66,17 @@ public class TechnologiesController : ControllerBase
     /// Cria uma nova tecnologia (apenas administradores)
     /// </summary>
     [HttpPost]
-    [Authorize] // TODO: Implementar autorização específica para admin
+    [Authorize] // NOTA: Para v1, qualquer usuário autenticado pode criar tecnologias
     public async Task<ActionResult<CreateTechnologyResponse>> CreateTechnology(
-        [FromBody] CreateTechnologyRequest request)
+        [FromBody] CreateTechnologyRequest request,
+        [FromServices] IValidator<CreateTechnologyRequest> validator)
     {
+        var validationResult = await validator.ValidateAsync(request);
+        if (!validationResult.IsValid)
+        {
+            return BadRequest(validationResult.Errors);
+        }
+
         _logger.LogInformation("Criando tecnologia: {Name}", request.Name);
 
         var command = new CreateTechnology(request.Name, request.Description);

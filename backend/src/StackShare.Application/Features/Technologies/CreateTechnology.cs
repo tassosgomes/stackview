@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using StackShare.Application.Interfaces;
 using StackShare.Domain.Entities;
+using StackShare.Domain.Exceptions;
 
 namespace StackShare.Application.Features.Technologies;
 
@@ -44,7 +45,7 @@ public class CreateTechnologyHandler : IRequestHandler<CreateTechnology, CreateT
             if (existingTechnology.IsActive)
             {
                 _logger.LogWarning("Tentativa de criar tecnologia que já existe: {Name}", request.Name);
-                throw new InvalidOperationException($"Já existe uma tecnologia com o nome '{request.Name}'");
+                throw new TechnologyAlreadyExistsException(request.Name);
             }
             else
             {
