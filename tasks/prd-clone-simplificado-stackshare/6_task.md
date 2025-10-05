@@ -1,7 +1,10 @@
 ---
-status: pending
+status: completed
 parallelizable: true
 blocked_by: ["1.0","2.0","3.0"]
+implementation_date: 2025-10-05
+reviewed_by: github-copilot
+review_date: 2025-10-05
 ---
 
 <task_context>
@@ -20,13 +23,14 @@ Implementar endpoints para gerar tokens MCP (retornar raw token uma única vez),
 
 ## Requisitos
 - POST /api/users/me/mcp-tokens (retorna RawToken uma vez)
+- GET /api/users/me/mcp-tokens (listagem sem expor tokens)
 - DELETE /api/users/me/mcp-tokens/{id}
 - Persistência: hash com sal; flag IsRevoked
 
 ## Subtarefas
-- [ ] 6.1 Entidade e repositório McpApiToken
-- [ ] 6.2 Geração de token seguro e hashing
-- [ ] 6.3 Endpoints protegidos do usuário logado
+- [x] 6.1 Entidade e repositório McpApiToken ✅ CONCLUÍDA
+- [x] 6.2 Geração de token seguro e hashing ✅ CONCLUÍDA
+- [x] 6.3 Endpoints protegidos do usuário logado ✅ CONCLUÍDA
 
 ## Sequenciamento
 - Bloqueado por: 1.0, 2.0, 3.0
