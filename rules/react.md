@@ -23,7 +23,7 @@ Utilize o hook useMemo para evitar o excesso de cálculos e interações desnece
 
 Nomeie os hooks com "use", por exemplo: useAuth, useLocalStorage, useUrl
 
-Utilize componentes do Shadcn UI sempre que possível
+Utilize componentes do Shadcn UI sempre que possível. Utilize o MCP do shadcn para entender como implementar os componentes
 
 Antes de criar um componente novo complexo, pergunte antes se deve buscar uma biblioteca existente
 

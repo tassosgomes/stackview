@@ -1,0 +1,21 @@
+# Implementação Clone Simplificado do StackShare - Resumo de Tarefas
+
+## Tarefas
+
+- [ ] 1.0 Fundações do Backend (.NET 8, estrutura de soluções, packages, Serilog, OTel)
+- [ ] 2.0 Banco de Dados e Migrations (EF Core + PostgreSQL, schema inicial)
+- [ ] 3.0 Autenticação e Autorização (Identity + JWT)
+- [ ] 4.0 Feature Stacks (Entidades, CQRS, CRUD, filtros, público/privado)
+- [ ] 5.0 Feature Tecnologias (pré-cadastro, sugestão, admin CRUD básico)
+- [ ] 6.0 Tokens MCP do Usuário (gerar, listar, revogar, hash)
+- [ ] 7.0 Middleware Global, Validação e Padronização de Respostas
+- [ ] 8.0 Testes Backend (unitários + integração com Testcontainers)
+- [ ] 9.0 Frontend Setup (Vite React TS, Tailwind, Shadcn, Router, React Query, Axios)
+- [ ] 10.0 Frontend Autenticação e Dashboard
+- [ ] 11.0 Frontend Stacks (CRUD, Markdown, filtros e busca)
+- [ ] 12.0 Frontend Tokens MCP (perfil: gerar/revogar)
+- [ ] 13.0 Servidor MCP (.NET Worker, MCP SDK, ferramentas search/get/list)
+- [ ] 14.0 Observabilidade (Serilog + OpenTelemetry, correlação API <-> MCP)
+- [ ] 15.0 Testes E2E (Playwright)
+- [ ] 16.0 Dockerização e Docker Compose (API, Frontend, MCP, Postgres)
+- [ ] 17.0 CI/CD (GitHub Actions: build, test, docker publish)
