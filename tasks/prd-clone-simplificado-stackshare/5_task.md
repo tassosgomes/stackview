@@ -1,7 +1,10 @@
 ---
-status: pending
+status: completed
 parallelizable: true
 blocked_by: ["1.0","2.0","3.0"]
+implementation_date: 2025-10-05
+reviewed_by: system
+review_date: 2025-10-05
 ---
 
 <task_context>
@@ -24,9 +27,9 @@ Implementar gestão de tecnologias com sugestão fuzzy e endpoints para administ
 - Permitir adicionar tecnologias inexistentes ao criar stack
 
 ## Subtarefas
-- [ ] 5.1 Entidade e repositórios
-- [ ] 5.2 Endpoint de sugestão com FuzzySharp
-- [ ] 5.3 Endpoints admin (feature flag/simple policy)
+- [x] 5.1 Entidade e repositórios ✅ CONCLUÍDA
+- [x] 5.2 Endpoint de sugestão com FuzzySharp ✅ CONCLUÍDA
+- [x] 5.3 Endpoints admin (feature flag/simple policy) ✅ CONCLUÍDA
 
 ## Sequenciamento
 - Bloqueado por: 1.0, 2.0, 3.0
