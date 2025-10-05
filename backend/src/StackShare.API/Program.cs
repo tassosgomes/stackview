@@ -57,6 +57,12 @@ builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Stack
 // Add FluentValidation
 builder.Services.AddValidatorsFromAssembly(typeof(StackShare.Application.AssemblyReference).Assembly);
 
+// Add HttpContextAccessor and CurrentUserService
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<StackShare.Application.Interfaces.ICurrentUserService, StackShare.Infrastructure.Services.CurrentUserService>();
+builder.Services.AddScoped<StackShare.Application.Interfaces.IStackShareDbContext>(provider => 
+    provider.GetRequiredService<StackShareDbContext>());
+
 // Add JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey não configurada");
