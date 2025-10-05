@@ -1,0 +1,35 @@
+### Register User
+POST http://localhost:5097/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "testmcp@example.com",
+  "password": "Password123",
+  "confirmPassword": "Password123"
+}
+
+### Login User
+POST http://localhost:5097/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "testmcp@example.com",
+  "password": "Password123"
+}
+
+### Generate MCP Token
+POST http://localhost:5097/api/users/me/mcp-tokens
+Content-Type: application/json
+Authorization: Bearer {{jwt_token}}
+
+{
+  "name": "My Development Token"
+}
+
+### List MCP Tokens
+GET http://localhost:5097/api/users/me/mcp-tokens
+Authorization: Bearer {{jwt_token}}
+
+### Revoke MCP Token
+DELETE http://localhost:5097/api/users/me/mcp-tokens/{{token_id}}
+Authorization: Bearer {{jwt_token}}

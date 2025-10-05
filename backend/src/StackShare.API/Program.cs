@@ -63,6 +63,9 @@ builder.Services.AddScoped<StackShare.Application.Interfaces.ICurrentUserService
 builder.Services.AddScoped<StackShare.Application.Interfaces.IStackShareDbContext>(provider => 
     provider.GetRequiredService<StackShareDbContext>());
 
+// Add TokenService
+builder.Services.AddScoped<StackShare.Application.Interfaces.ITokenService, StackShare.Infrastructure.Services.TokenService>();
+
 // Add JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey não configurada");
