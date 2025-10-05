@@ -35,3 +35,27 @@ Authorization: Bearer {{jwt_token}}
 Accept: application/json
 
 ###
+
+### Generate MCP Token
+POST {{StackShare.API_HostAddress}}/api/users/me/mcp-tokens
+Content-Type: application/json
+Authorization: Bearer {{jwt_token}}
+
+{
+  "name": "My Development Token"
+}
+
+###
+
+### List MCP Tokens
+GET {{StackShare.API_HostAddress}}/api/users/me/mcp-tokens
+Authorization: Bearer {{jwt_token}}
+Accept: application/json
+
+###
+
+### Revoke MCP Token (replace {{token_id}} with actual token ID)
+DELETE {{StackShare.API_HostAddress}}/api/users/me/mcp-tokens/{{token_id}}
+Authorization: Bearer {{jwt_token}}
+
+###

@@ -55,6 +55,11 @@ public class GlobalExceptionMiddleware
                 response = new { message = exception.Message };
                 break;
 
+            case NotFoundException:
+                context.Response.StatusCode = (int)HttpStatusCode.NotFound;
+                response = new { message = exception.Message };
+                break;
+
             case InvalidOperationException:
                 context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
                 response = new { message = exception.Message };
