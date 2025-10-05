@@ -1,6 +1,10 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using StackShare.Domain.Entities;
+using StackShare.Infrastructure.Data;
 
 // Configure Serilog
 Log.Logger = new LoggerConfiguration()
@@ -16,6 +20,29 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add Serilog to the host
 builder.Host.UseSerilog();
+
+// Add Entity Framework DbContext
+builder.Services.AddDbContext<StackShareDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Add Identity
+builder.Services.AddIdentity<User, IdentityRole<Guid>>(options =>
+{
+    // Password settings (pode ser ajustado conforme necessário)
+    options.Password.RequireDigit = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequiredLength = 6;
+    
+    // User settings
+    options.User.RequireUniqueEmail = true;
+    
+    // Sign-in settings
+    options.SignIn.RequireConfirmedEmail = false; // Para simplificar no início
+})
+.AddEntityFrameworkStores<StackShareDbContext>()
+.AddDefaultTokenProviders();
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -51,6 +78,28 @@ app.UseHttpsRedirection();
 app.UseSerilogRequestLogging();
 
 app.MapControllers();
+
+// Seed database in development
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    var context = scope.ServiceProvider.GetRequiredService<StackShareDbContext>();
+    
+    try
+    {
+        // Apply migrations if needed
+        await context.Database.MigrateAsync();
+        
+        // Seed initial data
+        await DatabaseSeeder.SeedAsync(context);
+        
+        Log.Information("Database migration and seeding completed successfully");
+    }
+    catch (Exception ex)
+    {
+        Log.Error(ex, "An error occurred while migrating and seeding the database");
+    }
+}
 
 Log.Information("StackShare API starting up");
 
