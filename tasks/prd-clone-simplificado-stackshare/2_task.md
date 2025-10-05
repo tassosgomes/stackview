@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 parallelizable: false
 blocked_by: ["1.0"]
 ---
@@ -24,10 +24,10 @@ Configurar DbContext, connection string, migrations e schema inicial para entida
 - Tabelas: Users (Identity), Stacks, Technologies, StackTechnology, McpApiToken, StackHistory
 
 ## Subtarefas
-- [ ] 2.1 Adicionar provider Npgsql e configurar DbContext
-- [ ] 2.2 Modelar entidades e relacionamentos
-- [ ] 2.3 Criar e aplicar migration inicial
-- [ ] 2.4 Dados seed de tecnologias comuns (opcional)
+- [x] 2.1 Adicionar provider Npgsql e configurar DbContext
+- [x] 2.2 Modelar entidades e relacionamentos
+- [x] 2.3 Criar e aplicar migration inicial
+- [x] 2.4 Dados seed de tecnologias comuns (opcional)
 
 ## Sequenciamento
 - Bloqueado por: 1.0
