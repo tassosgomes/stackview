@@ -1,37 +1,20 @@
-import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/features/auth/use-auth"
-import { stacksApi } from "@/services/stacks"
-import type { StackSummary } from "@/types/stack"
+import { useMyStacks } from "@/hooks/use-stacks"
 
 export function DashboardPage() {
   const { user, logout } = useAuth()
-  const [stacks, setStacks] = useState<StackSummary[]>([])
-  const [isLoadingStacks, setIsLoadingStacks] = useState(true)
-  const [stacksError, setStacksError] = useState<string>("")
+  
+  const {
+    data: stacksResponse,
+    isLoading: isLoadingStacks,
+    error: stacksError
+  } = useMyStacks(1, 10)
 
-  useEffect(() => {
-    const loadStacks = async () => {
-      try {
-        setIsLoadingStacks(true)
-        const response = await stacksApi.getMyStacks(1, 10)
-        setStacks(response.items)
-      } catch (error) {
-        setStacksError(
-          error instanceof Error 
-            ? error.message 
-            : "Failed to load your stacks"
-        )
-      } finally {
-        setIsLoadingStacks(false)
-      }
-    }
-
-    loadStacks()
-  }, [])
+  const stacks = stacksResponse?.items ?? []
 
   return (
     <div className="space-y-6">
@@ -68,7 +51,7 @@ export function DashboardPage() {
               </div>
             ) : stacksError ? (
               <div className="text-sm text-red-600 bg-red-50 p-3 rounded">
-                {stacksError}
+                {stacksError instanceof Error ? stacksError.message : "Failed to load your stacks"}
               </div>
             ) : (
               <div className="space-y-4">
