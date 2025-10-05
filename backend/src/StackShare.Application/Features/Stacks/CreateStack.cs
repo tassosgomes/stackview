@@ -13,7 +13,8 @@ public record CreateStackRequest(
     string Description,
     StackType Type,
     bool IsPublic,
-    List<Guid> TechnologyIds) : IRequest<StackResponse>;
+    List<Guid>? TechnologyIds,
+    List<string>? TechnologyNames) : IRequest<StackResponse>;
 
 public record StackResponse(
     Guid Id,
@@ -46,10 +47,17 @@ public class CreateStackValidator : AbstractValidator<CreateStackRequest>
         RuleFor(x => x.Type)
             .IsInEnum().WithMessage("Tipo deve ser válido");
 
+        RuleFor(x => x)
+            .Must(x => (x.TechnologyIds?.Any() == true) || (x.TechnologyNames?.Any() == true))
+            .WithMessage("Pelo menos uma tecnologia deve ser selecionada (ID ou nome)");
+
         RuleFor(x => x.TechnologyIds)
-            .NotEmpty().WithMessage("Pelo menos uma tecnologia deve ser selecionada")
-            .Must(ids => ids.All(id => id != Guid.Empty))
-            .WithMessage("Todas as tecnologias devem ter IDs válidos");
+            .Must(ids => ids == null || ids.All(id => id != Guid.Empty))
+            .WithMessage("Todos os IDs de tecnologia devem ser válidos");
+
+        RuleFor(x => x.TechnologyNames)
+            .Must(names => names == null || names.All(name => !string.IsNullOrWhiteSpace(name)))
+            .WithMessage("Todos os nomes de tecnologia devem ser válidos");
     }
 }
 
@@ -58,15 +66,18 @@ public class CreateStackHandler : IRequestHandler<CreateStackRequest, StackRespo
     private readonly IStackShareDbContext _context;
     private readonly IValidator<CreateStackRequest> _validator;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IMediator _mediator;
 
     public CreateStackHandler(
         IStackShareDbContext context, 
         IValidator<CreateStackRequest> validator,
-        ICurrentUserService currentUserService)
+        ICurrentUserService currentUserService,
+        IMediator mediator)
     {
         _context = context;
         _validator = validator;
         _currentUserService = currentUserService;
+        _mediator = mediator;
     }
 
     public async Task<StackResponse> Handle(CreateStackRequest request, CancellationToken cancellationToken)
@@ -77,14 +88,32 @@ public class CreateStackHandler : IRequestHandler<CreateStackRequest, StackRespo
             throw new ValidationException(validationResult.Errors);
         }
 
-        // Verificar se todas as tecnologias existem
-        var technologies = await _context.Technologies
-            .Where(t => request.TechnologyIds.Contains(t.Id) && t.IsActive)
-            .ToListAsync(cancellationToken);
+        var allTechnologyIds = new List<Guid>();
 
-        if (technologies.Count != request.TechnologyIds.Count)
+        // Processar IDs de tecnologias se fornecidos
+        if (request.TechnologyIds?.Any() == true)
         {
-            throw new ArgumentException("Uma ou mais tecnologias não foram encontradas ou estão inativas");
+            var existingTechById = await _context.Technologies
+                .Where(t => request.TechnologyIds.Contains(t.Id) && t.IsActive)
+                .ToListAsync(cancellationToken);
+
+            if (existingTechById.Count != request.TechnologyIds.Count)
+            {
+                throw new ArgumentException("Uma ou mais tecnologias por ID não foram encontradas ou estão inativas");
+            }
+
+            allTechnologyIds.AddRange(existingTechById.Select(t => t.Id));
+        }
+
+        // Processar nomes de tecnologias se fornecidos
+        if (request.TechnologyNames?.Any() == true)
+        {
+            foreach (var techName in request.TechnologyNames)
+            {
+                var techCommand = new Technologies.CreateOrGetTechnology(techName);
+                var techId = await _mediator.Send(techCommand, cancellationToken);
+                allTechnologyIds.Add(techId);
+            }
         }
 
         // Criar o stack
@@ -103,7 +132,7 @@ public class CreateStackHandler : IRequestHandler<CreateStackRequest, StackRespo
         _context.Stacks.Add(stack);
 
         // Adicionar tecnologias ao stack
-        foreach (var technologyId in request.TechnologyIds)
+        foreach (var technologyId in allTechnologyIds.Distinct()) // Distinct para evitar duplicatas
         {
             var stackTechnology = new StackTechnology
             {

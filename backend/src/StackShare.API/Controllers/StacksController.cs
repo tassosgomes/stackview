@@ -122,19 +122,5 @@ public class StacksController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>
-    /// Endpoint temporário para listar tecnologias disponíveis (para testes)
-    /// </summary>
-    [HttpGet("~/api/technologies")]
-    public async Task<ActionResult> GetTechnologies(
-        [FromServices] Application.Interfaces.IStackShareDbContext context)
-    {
-        var technologies = await context.Technologies
-            .Where(t => t.IsActive)
-            .Select(t => new { t.Id, t.Name, t.Description })
-            .Take(10)
-            .ToListAsync();
 
-        return Ok(technologies);
-    }
 }
