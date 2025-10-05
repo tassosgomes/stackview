@@ -1,7 +1,8 @@
 ---
-status: pending
+status: completed
 parallelizable: true
 blocked_by: ["9.0","3.0"]
+completed_at: 2025-10-05
 ---
 
 <task_context>
@@ -24,9 +25,9 @@ Implementar telas de registro/login e dashboard do usuário com lista de stacks 
 - Chamar API de stacks do usuário autenticado
 
 ## Subtarefas
-- [ ] 10.1 Formulários com react-hook-form + zod
-- [ ] 10.2 Auth context e persistência segura do token
-- [ ] 10.3 Dashboard com lista de stacks do usuário
+- [x] 10.1 Formulários com react-hook-form + zod ✅ CONCLUÍDA
+- [x] 10.2 Auth context e persistência segura do token ✅ CONCLUÍDA
+- [x] 10.3 Dashboard com lista de stacks do usuário ✅ CONCLUÍDA
 
 ## Sequenciamento
 - Bloqueado por: 9.0, 3.0

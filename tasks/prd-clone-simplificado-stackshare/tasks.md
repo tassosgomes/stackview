@@ -11,7 +11,7 @@
 - [x] 7.0 Middleware Global, Validação e Padronização de Respostas ✅ CONCLUÍDA
 - [x] 8.0 Testes Backend (unitários + integração com Testcontainers) ✅ CONCLUÍDA
 - [x] 9.0 Frontend Setup (Vite React TS, Tailwind, Shadcn, Router, React Query, Axios) ✅ CONCLUÍDA
-- [ ] 10.0 Frontend Autenticação e Dashboard
+- [x] 10.0 Frontend Autenticação e Dashboard ✅ CONCLUÍDA
 - [ ] 11.0 Frontend Stacks (CRUD, Markdown, filtros e busca)
 - [ ] 12.0 Frontend Tokens MCP (perfil: gerar/revogar)
 - [ ] 13.0 Servidor MCP (.NET Worker, MCP SDK, ferramentas search/get/list)
