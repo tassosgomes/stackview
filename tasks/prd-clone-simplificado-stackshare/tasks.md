@@ -2,7 +2,7 @@
 
 ## Tarefas
 
-- [ ] 1.0 Fundações do Backend (.NET 8, estrutura de soluções, packages, Serilog, OTel)
+- [x] 1.0 Fundações do Backend (.NET 8, estrutura de soluções, packages, Serilog, OTel) ✅ CONCLUÍDA
 - [ ] 2.0 Banco de Dados e Migrations (EF Core + PostgreSQL, schema inicial)
 - [ ] 3.0 Autenticação e Autorização (Identity + JWT)
 - [ ] 4.0 Feature Stacks (Entidades, CQRS, CRUD, filtros, público/privado)

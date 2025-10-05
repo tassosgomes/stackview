@@ -1,0 +1,6 @@
+@StackShare.API_HostAddress = http://localhost:5095
+
+GET {{StackShare.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
