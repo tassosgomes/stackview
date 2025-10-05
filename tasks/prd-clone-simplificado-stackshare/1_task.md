@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 parallelizable: true
 blocked_by: []
 ---
@@ -26,11 +26,11 @@ Inicializar a solução .NET com projetos API, Application, Domain e Infrastruct
 - Pacotes base (MediatR, FluentValidation, EF Core Npgsql)
 
 ## Subtarefas
-- [ ] 1.1 Criar solução e projetos dentro da pasta backend (API, Application, Domain, Infrastructure)
-- [ ] 1.2 Adicionar pacotes NuGet e configurar DI base
-- [ ] 1.3 Configurar Serilog (console e arquivo JSON)
-- [ ] 1.4 Habilitar OpenTelemetry (AspNetCore + HttpClient)
-- [ ] 1.5 Documentar estrutura em README interno
+- [x] 1.1 Criar solução e projetos dentro da pasta backend (API, Application, Domain, Infrastructure)
+- [x] 1.2 Adicionar pacotes NuGet e configurar DI base
+- [x] 1.3 Configurar Serilog (console e arquivo JSON)
+- [x] 1.4 Habilitar OpenTelemetry (AspNetCore + HttpClient)
+- [x] 1.5 Documentar estrutura em README interno
 
 ## Sequenciamento
 - Bloqueado por: -
