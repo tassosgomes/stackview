@@ -1,0 +1,179 @@
+name: Full Stack CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  detect-changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      backend-changed: ${{ steps.changes.outputs.backend }}
+      frontend-changed: ${{ steps.changes.outputs.frontend }}
+      mcp-changed: ${{ steps.changes.outputs.mcp }}
+      docker-changed: ${{ steps.changes.outputs.docker }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+              - '.github/workflows/backend.yml'
+            frontend:
+              - 'frontend/**'
+              - '.github/workflows/frontend.yml'
+            mcp:
+              - 'backend/src/StackShare.McpServer/**'
+              - '.github/workflows/mcp.yml'
+            docker:
+              - 'docker-compose.yml'
+              - '.dockerignore'
+              - '*.Dockerfile'
+
+  call-backend-workflow:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backend-changed == 'true'
+    uses: ./.github/workflows/backend.yml
+    secrets: inherit
+
+  call-frontend-workflow:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.frontend-changed == 'true'
+    uses: ./.github/workflows/frontend.yml
+    secrets: inherit
+
+  call-mcp-workflow:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.mcp-changed == 'true'
+    uses: ./.github/workflows/mcp.yml
+    secrets: inherit
+
+  full-stack-integration:
+    name: Full Stack Integration Test
+    runs-on: ubuntu-latest
+    needs: [detect-changes, call-backend-workflow, call-frontend-workflow, call-mcp-workflow]
+    if: always() && (needs.call-backend-workflow.result == 'success' || needs.call-frontend-workflow.result == 'success' || needs.call-mcp-workflow.result == 'success')
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Create test environment
+      run: |
+        # Copy environment template
+        cp .env.example .env
+        
+        # Override with test values
+        sed -i 's/POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=test123/' .env
+        sed -i 's/JWT_SECRET=.*/JWT_SECRET=test-jwt-secret-for-integration-testing-only/' .env
+        sed -i 's/MCP_API_KEY=.*/MCP_API_KEY=test-mcp-key/' .env
+
+    - name: Start full stack with Docker Compose
+      run: |
+        # Start all services
+        docker compose up -d --build
+        
+        # Wait for services to be ready
+        sleep 60
+        
+        # Check service health
+        docker compose ps
+
+    - name: Run health checks
+      run: |
+        # Test API health
+        curl -f http://localhost:5001/health || exit 1
+        
+        # Test frontend availability  
+        curl -f http://localhost:3000 || exit 1
+        
+        # Test database connectivity
+        docker compose exec -T postgres pg_isready -U stackshare || exit 1
+
+    - name: Run smoke tests
+      run: |
+        # Test API endpoints
+        curl -f http://localhost:5001/api/technologies/languages || exit 1
+        
+        # Test MCP server (if accessible via HTTP)
+        # Add MCP-specific health checks here when available
+
+    - name: Collect logs
+      if: always()
+      run: |
+        echo "=== API Logs ==="
+        docker compose logs api
+        echo "=== Frontend Logs ==="
+        docker compose logs frontend
+        echo "=== MCP Logs ==="
+        docker compose logs mcp
+        echo "=== Database Logs ==="
+        docker compose logs postgres
+
+    - name: Cleanup
+      if: always()
+      run: |
+        docker compose down -v
+
+  deployment-gate:
+    name: Deployment Gate
+    runs-on: ubuntu-latest
+    needs: [call-backend-workflow, call-frontend-workflow, call-mcp-workflow, full-stack-integration]
+    if: always() && github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Check deployment readiness
+      run: |
+        echo "Backend Status: ${{ needs.call-backend-workflow.result }}"
+        echo "Frontend Status: ${{ needs.call-frontend-workflow.result }}"
+        echo "MCP Status: ${{ needs.call-mcp-workflow.result }}"
+        echo "Integration Status: ${{ needs.full-stack-integration.result }}"
+        
+        # Require at least backend and integration to pass
+        if [[ "${{ needs.call-backend-workflow.result }}" == "success" && "${{ needs.full-stack-integration.result }}" == "success" ]]; then
+          echo "✅ Deployment gate passed"
+        else
+          echo "❌ Deployment gate failed"
+          exit 1
+        fi
+
+    - name: Create deployment summary
+      if: success()
+      run: |
+        echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "All quality gates passed successfully!" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📦 Images Published" >> $GITHUB_STEP_SUMMARY
+        echo "- \`${{ env.REGISTRY }}/${{ github.repository }}/stackshare-api:latest\`" >> $GITHUB_STEP_SUMMARY
+        echo "- \`${{ env.REGISTRY }}/${{ github.repository }}/stackshare-frontend:latest\`" >> $GITHUB_STEP_SUMMARY  
+        echo "- \`${{ env.REGISTRY }}/${{ github.repository }}/stackshare-mcp:latest\`" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🔗 Quick Deploy" >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+        echo "# Pull latest images" >> $GITHUB_STEP_SUMMARY
+        echo "docker compose pull" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "# Deploy" >> $GITHUB_STEP_SUMMARY
+        echo "docker compose up -d" >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,193 @@
+name: MCP Server CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'backend/src/StackShare.McpServer/**'
+      - '.github/workflows/mcp.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'backend/src/StackShare.McpServer/**'
+      - '.github/workflows/mcp.yml'
+  workflow_call:
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/stackshare-mcp
+
+jobs:
+  test:
+    name: Test MCP Server
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Cache .NET packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-mcp-${{ hashFiles('**/packages.lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
+    - name: Restore dependencies
+      working-directory: ./backend
+      run: dotnet restore src/StackShare.McpServer
+
+    - name: Build MCP Server
+      working-directory: ./backend
+      run: dotnet build src/StackShare.McpServer --no-restore --configuration Release
+
+    - name: Run MCP Server tests
+      working-directory: ./backend
+      run: |
+        if [ -d "tests/StackShare.McpServer.Tests" ]; then
+          dotnet test tests/StackShare.McpServer.Tests --no-build --configuration Release --verbosity normal
+        else
+          echo "No MCP-specific tests found - using general test coverage"
+        fi
+
+  build-and-push:
+    name: Build and Push MCP Docker Image
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix=sha-
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Build and push MCP image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./backend/src/StackShare.McpServer/Dockerfile
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        platforms: linux/amd64,linux/arm64
+
+  integration-test:
+    name: MCP Integration Tests
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: stackshare_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Pull MCP Docker image
+      run: docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+    - name: Start API service
+      working-directory: ./backend
+      run: |
+        dotnet restore
+        dotnet build
+        dotnet run --project src/StackShare.API &
+        sleep 30
+      env:
+        ASPNETCORE_ENVIRONMENT: Testing
+        ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=stackshare_test;Username=postgres;Password=postgres"
+
+    - name: Start MCP Server with Docker
+      run: |
+        docker run -d --name mcp-server \
+          --network host \
+          -e API_BASE_URL=http://localhost:5001/api \
+          -e MCP_API_KEY=test-key \
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+        sleep 10
+
+    - name: Test MCP Server connectivity
+      run: |
+        # Test if MCP server is responding (adjust based on your MCP implementation)
+        timeout 30 bash -c 'until nc -z localhost 5002; do sleep 1; done'
+        echo "MCP Server is responding"
+
+    - name: Cleanup
+      if: always()
+      run: |
+        docker stop mcp-server || true
+        docker rm mcp-server || true
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    
+    permissions:
+      contents: read
+      packages: read
+      security-events: write
+
+    steps:
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy-results.sarif'

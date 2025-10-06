@@ -1,0 +1,273 @@
+name: Security and Dependency Updates
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  security-events: write
+
+jobs:
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v3
+        with:
+          fail-on-severity: moderate
+          deny-licenses: GPL-2.0, GPL-3.0
+
+  update-dotnet-dependencies:
+    name: Update .NET Dependencies
+    runs-on: ubuntu-latest
+    env:
+      UPDATES_FOUND: 'false'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Install dotnet-outdated
+      run: dotnet tool install --global dotnet-outdated-tool
+
+    - name: Check for outdated packages
+      working-directory: ./backend
+      run: |
+        echo "## .NET Package Updates Available" > ../dependency-updates.md
+        echo "" >> ../dependency-updates.md
+        
+        if dotnet outdated --output json > outdated.json; then
+          if [ -s outdated.json ] && [ "$(jq '.Projects | length' outdated.json)" -gt 0 ]; then
+            echo "Updates found, creating PR..."
+            echo "UPDATES_FOUND=true" >> $GITHUB_ENV
+            
+            # Parse and format updates
+            jq -r '.Projects[] | "### \(.Name)\n\n| Package | Current | Latest | Severity |\n|---------|---------|--------|----------|\n\(.Frameworks[].Dependencies[] | "| \(.Name) | \(.ResolvedVersion) | \(.LatestVersion) | \(.Severity // "N/A") |")\n"' outdated.json >> ../dependency-updates.md
+          else
+            echo "No updates found"
+            echo "UPDATES_FOUND=false" >> $GITHUB_ENV
+          fi
+        fi
+
+    - name: Update packages (minor versions only)
+      if: env.UPDATES_FOUND == 'true'
+      working-directory: ./backend
+      run: |
+        # Update to latest minor versions (safer)
+        dotnet outdated --upgrade --version-lock Major
+
+    - name: Create Pull Request
+      if: env.UPDATES_FOUND == 'true'
+      uses: peter-evans/create-pull-request@v5
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: 'chore(deps): update .NET dependencies'
+        title: '🔄 Automated .NET Dependency Updates'
+        body-path: dependency-updates.md
+        branch: chore/update-dotnet-deps
+        delete-branch: true
+        labels: |
+          dependencies
+          automated-pr
+          .NET
+
+  update-npm-dependencies:
+    name: Update NPM Dependencies  
+    runs-on: ubuntu-latest
+    env:
+      NPM_UPDATES_FOUND: 'false'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+
+    - name: Install npm-check-updates
+      run: npm install -g npm-check-updates
+
+    - name: Check for outdated packages
+      working-directory: ./frontend
+      run: |
+        echo "## NPM Package Updates Available" > ../npm-updates.md
+        echo "" >> ../npm-updates.md
+        
+        if ncu --jsonUpgraded > updates.json 2>/dev/null; then
+          if [ -s updates.json ] && [ "$(jq '. | length' updates.json)" -gt 0 ]; then
+            echo "Updates found, creating PR..."
+            echo "NPM_UPDATES_FOUND=true" >> $GITHUB_ENV
+            
+            # Format updates table
+            echo "| Package | Current | Latest |" >> ../npm-updates.md
+            echo "|---------|---------|--------|" >> ../npm-updates.md
+            jq -r 'to_entries[] | "| \(.key) | \(.value.from) | \(.value.to) |"' updates.json >> ../npm-updates.md
+          else
+            echo "No updates found"
+            echo "NPM_UPDATES_FOUND=false" >> $GITHUB_ENV
+          fi
+        else
+          echo "No updates found or ncu failed"
+          echo "NPM_UPDATES_FOUND=false" >> $GITHUB_ENV
+        fi
+
+    - name: Update packages (minor and patch only)
+      if: env.NPM_UPDATES_FOUND == 'true'
+      working-directory: ./frontend
+      run: |
+        # Update to latest minor/patch versions (safer than major)
+        ncu --target minor -u
+        npm install
+
+    - name: Run tests after updates
+      if: env.NPM_UPDATES_FOUND == 'true'
+      working-directory: ./frontend
+      run: |
+        npm run lint
+        npm run type-check
+        npm run test:unit
+
+    - name: Create Pull Request
+      if: env.NPM_UPDATES_FOUND == 'true'
+      uses: peter-evans/create-pull-request@v5
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: 'chore(deps): update NPM dependencies'
+        title: '🔄 Automated NPM Dependency Updates'
+        body-path: npm-updates.md
+        branch: chore/update-npm-deps
+        delete-branch: true
+        labels: |
+          dependencies
+          automated-pr
+          frontend
+
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+
+    - name: .NET Security Audit
+      working-directory: ./backend
+      run: |
+        dotnet restore
+        dotnet list package --vulnerable --include-transitive | tee ../dotnet-vulnerabilities.txt
+
+    - name: NPM Security Audit
+      working-directory: ./frontend
+      run: |
+        npm install
+        npm audit --audit-level=moderate | tee ../npm-vulnerabilities.txt
+
+    - name: Upload security reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-audit-reports
+        path: |
+          dotnet-vulnerabilities.txt
+          npm-vulnerabilities.txt
+        retention-days: 30
+
+  codeql-analysis:
+    name: CodeQL Security Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+
+    strategy:
+      matrix:
+        language: ['csharp', 'javascript']
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v2
+      with:
+        languages: ${{ matrix.language }}
+        queries: security-extended
+
+    - name: Setup .NET (for C#)
+      if: matrix.language == 'csharp'
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Build .NET (for C#)
+      if: matrix.language == 'csharp'
+      working-directory: ./backend
+      run: |
+        dotnet restore
+        dotnet build --no-restore
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v2
+
+  docker-security-scan:
+    name: Docker Security Scan
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run Trivy filesystem scan
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-fs-results.sarif'
+
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy-fs-results.sarif'
+
+    - name: Run Hadolint on Dockerfiles
+      uses: hadolint/hadolint-action@v3.1.0
+      with:
+        dockerfile: backend/src/StackShare.API/Dockerfile
+        format: sarif
+        output-file: hadolint-api.sarif
+
+    - name: Upload Hadolint scan results
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: hadolint-api.sarif

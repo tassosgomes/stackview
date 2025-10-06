@@ -1,0 +1,247 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., v1.0.0)'
+        required: true
+        type: string
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Determine version
+      id: version
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          VERSION="${{ github.event.inputs.version }}"
+        else
+          VERSION="${{ github.ref_name }}"
+        fi
+        echo "version=${VERSION}" >> $GITHUB_OUTPUT
+        echo "Version: ${VERSION}"
+
+    - name: Verify main branch
+      if: github.event_name == 'workflow_dispatch'
+      run: |
+        if [ "${{ github.ref_name }}" != "main" ]; then
+          echo "Release can only be created from main branch"
+          exit 1
+        fi
+
+    - name: Generate changelog
+      id: changelog
+      run: |
+        # Get commits since last tag
+        LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+        
+        if [ -n "$LAST_TAG" ]; then
+          COMMITS=$(git log ${LAST_TAG}..HEAD --oneline --pretty=format:"- %s (%h)")
+        else
+          COMMITS=$(git log --oneline --pretty=format:"- %s (%h)" | head -20)
+        fi
+        
+        echo "## What's Changed" > changelog.md
+        echo "" >> changelog.md
+        echo "$COMMITS" >> changelog.md
+        echo "" >> changelog.md
+        echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${LAST_TAG}...${{ steps.version.outputs.version }}" >> changelog.md
+
+    - name: Create Release
+      id: create_release
+      uses: softprops/action-gh-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.version.outputs.version }}
+        name: Release ${{ steps.version.outputs.version }}
+        body_path: changelog.md
+        draft: false
+        prerelease: ${{ contains(steps.version.outputs.version, 'beta') || contains(steps.version.outputs.version, 'alpha') || contains(steps.version.outputs.version, 'rc') }}
+
+  build-release-images:
+    name: Build Release Images
+    runs-on: ubuntu-latest
+    needs: create-release
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      matrix:
+        component:
+          - name: api
+            dockerfile: ./backend/src/StackShare.API/Dockerfile
+            context: .
+          - name: mcp
+            dockerfile: ./backend/src/StackShare.McpServer/Dockerfile
+            context: .
+          - name: frontend
+            dockerfile: ./frontend/Dockerfile
+            context: ./frontend
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ github.repository }}/stackshare-${{ matrix.component.name }}
+        tags: |
+          type=ref,event=tag
+          type=raw,value=latest
+          type=raw,value=${{ needs.create-release.outputs.version }}
+
+    - name: Build and push
+      uses: docker/build-push-action@v5
+      with:
+        context: ${{ matrix.component.context }}
+        file: ${{ matrix.component.dockerfile }}
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        platforms: linux/amd64,linux/arm64
+
+  create-deployment-package:
+    name: Create Deployment Package
+    runs-on: ubuntu-latest
+    needs: [create-release, build-release-images]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Create deployment package
+      run: |
+        VERSION=${{ needs.create-release.outputs.version }}
+        
+        # Create deployment directory
+        mkdir -p deployment-package
+        
+        # Copy deployment files
+        cp docker-compose.yml deployment-package/
+        cp .env.example deployment-package/.env.template
+        cp Makefile deployment-package/
+        cp DOCKER.md deployment-package/README.md
+        
+        # Create deployment script
+        cat > deployment-package/deploy.sh << 'EOF'
+        #!/bin/bash
+        set -e
+        
+        echo "🚀 Deploying StackShare ${{ needs.create-release.outputs.version }}"
+        
+        # Check prerequisites
+        command -v docker >/dev/null 2>&1 || { echo "Docker is required"; exit 1; }
+        command -v docker-compose >/dev/null 2>&1 || command -v docker compose >/dev/null 2>&1 || { echo "Docker Compose is required"; exit 1; }
+        
+        # Setup environment
+        if [ ! -f .env ]; then
+          echo "Creating .env from template..."
+          cp .env.template .env
+          echo "⚠️  Please edit .env file before continuing"
+          exit 0
+        fi
+        
+        # Pull images
+        echo "📦 Pulling Docker images..."
+        docker compose pull
+        
+        # Start services
+        echo "🆙 Starting services..."
+        docker compose up -d
+        
+        # Wait for health checks
+        echo "🔍 Waiting for services to be healthy..."
+        sleep 30
+        
+        # Verify deployment
+        echo "✅ Checking service health..."
+        if curl -f http://localhost:5001/health >/dev/null 2>&1; then
+          echo "✅ API is healthy"
+        else
+          echo "❌ API health check failed"
+        fi
+        
+        if curl -f http://localhost:3000 >/dev/null 2>&1; then
+          echo "✅ Frontend is healthy"
+        else
+          echo "❌ Frontend health check failed"
+        fi
+        
+        echo "🎉 Deployment complete!"
+        echo "🌐 Frontend: http://localhost:3000"
+        echo "🔌 API: http://localhost:5001"
+        EOF
+        
+        chmod +x deployment-package/deploy.sh
+        
+        # Update docker-compose with release images
+        sed -i "s|image: ghcr.io/${{ github.repository }}/stackshare-api.*|image: ghcr.io/${{ github.repository }}/stackshare-api:$VERSION|g" deployment-package/docker-compose.yml
+        sed -i "s|image: ghcr.io/${{ github.repository }}/stackshare-frontend.*|image: ghcr.io/${{ github.repository }}/stackshare-frontend:$VERSION|g" deployment-package/docker-compose.yml
+        sed -i "s|image: ghcr.io/${{ github.repository }}/stackshare-mcp.*|image: ghcr.io/${{ github.repository }}/stackshare-mcp:$VERSION|g" deployment-package/docker-compose.yml
+        
+        # Create archive
+        tar -czf stackshare-$VERSION-deployment.tar.gz -C deployment-package .
+
+    - name: Upload deployment package
+      uses: softprops/action-gh-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ needs.create-release.outputs.version }}
+        files: ./stackshare-${{ needs.create-release.outputs.version }}-deployment.tar.gz
+
+  notify:
+    name: Notify Release
+    runs-on: ubuntu-latest
+    needs: [create-release, build-release-images, create-deployment-package]
+    if: always()
+
+    steps:
+    - name: Create release summary
+      run: |
+        echo "## 🎉 StackShare ${{ needs.create-release.outputs.version }} Released!" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📦 Docker Images" >> $GITHUB_STEP_SUMMARY
+        echo "- \`ghcr.io/${{ github.repository }}/stackshare-api:${{ needs.create-release.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "- \`ghcr.io/${{ github.repository }}/stackshare-frontend:${{ needs.create-release.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "- \`ghcr.io/${{ github.repository }}/stackshare-mcp:${{ needs.create-release.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🚀 Quick Deploy" >> $GITHUB_STEP_SUMMARY
+        echo "1. Download deployment package from [releases](https://github.com/${{ github.repository }}/releases/tag/${{ needs.create-release.outputs.version }})" >> $GITHUB_STEP_SUMMARY
+        echo "2. Extract: \`tar -xzf stackshare-${{ needs.create-release.outputs.version }}-deployment.tar.gz\`" >> $GITHUB_STEP_SUMMARY
+        echo "3. Deploy: \`./deploy.sh\`" >> $GITHUB_STEP_SUMMARY
