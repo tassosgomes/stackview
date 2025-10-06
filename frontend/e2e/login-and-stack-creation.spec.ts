@@ -15,7 +15,7 @@ test.describe('Login and Stack Creation Flow', () => {
     stackCreatePage = new StackCreatePage(page);
   });
 
-  test('should successfully login and create a new stack', async ({ page }) => {
+  test('should successfully login and create a new stack', async () => {
     // Step 1: Navigate to login page
     await loginPage.navigate();
     await loginPage.waitForLoginForm();
@@ -53,7 +53,7 @@ test.describe('Login and Stack Creation Flow', () => {
     expect(stackNames).toContain(stackData.name);
   });
 
-  test('should show validation errors for empty stack form', async ({ page }) => {
+  test('should show validation errors for empty stack form', async () => {
     // Login first
     await loginPage.navigate();
     await loginPage.login(TEST_USERS.validUser.email, TEST_USERS.validUser.password);
@@ -70,7 +70,7 @@ test.describe('Login and Stack Creation Flow', () => {
     expect(await stackCreatePage.isOnCreatePage()).toBe(true);
   });
 
-  test('should successfully create stack with markdown content', async ({ page }) => {
+  test('should successfully create stack with markdown content', async () => {
     // Login
     await loginPage.navigate();
     await loginPage.login(TEST_USERS.validUser.email, TEST_USERS.validUser.password);
@@ -128,7 +128,7 @@ app.get('/api/stacks', async (req, res) => {
     expect(stackNames).toContain(stackData.name);
   });
 
-  test('should handle login failure with invalid credentials', async ({ page }) => {
+  test('should handle login failure with invalid credentials', async () => {
     await loginPage.navigate();
     await loginPage.waitForLoginForm();
     
@@ -146,7 +146,7 @@ app.get('/api/stacks', async (req, res) => {
     }
   });
 
-  test('should create private stack', async ({ page }) => {
+  test('should create private stack', async () => {
     // Login
     await loginPage.navigate();
     await loginPage.login(TEST_USERS.validUser.email, TEST_USERS.validUser.password);
@@ -172,7 +172,7 @@ app.get('/api/stacks', async (req, res) => {
     expect(stackNames).toContain(stackData.name);
   });
 
-  test('should add multiple technologies to stack', async ({ page }) => {
+  test('should add multiple technologies to stack', async () => {
     // Login
     await loginPage.navigate();
     await loginPage.login(TEST_USERS.validUser.email, TEST_USERS.validUser.password);

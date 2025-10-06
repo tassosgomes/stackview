@@ -161,7 +161,7 @@ test.describe('MCP Token Management Flow', () => {
     
     // Verify clipboard content
     const clipboardContent = await profilePage.evaluateInPage(() => {
-      return (navigator as any).clipboard.readText();
+      return (navigator as Navigator & { clipboard: { readText(): Promise<string> } }).clipboard.readText();
     });
     expect(clipboardContent).toBe(tokenValue);
     

@@ -13,9 +13,9 @@
 - [x] 9.0 Frontend Setup (Vite React TS, Tailwind, Shadcn, Router, React Query, Axios) ✅ CONCLUÍDA
 - [x] 10.0 Frontend Autenticação e Dashboard ✅ CONCLUÍDA
 - [x] 11.0 Frontend Stacks (CRUD, Markdown, filtros e busca) ✅ CONCLUÍDA
-- [ ] 12.0 Frontend Tokens MCP (perfil: gerar/revogar)
-- [ ] 13.0 Servidor MCP (.NET Worker, MCP SDK, ferramentas search/get/list)
-- [ ] 14.0 Observabilidade (Serilog + OpenTelemetry, correlação API <-> MCP)
-- [ ] 15.0 Testes E2E (Playwright)
+- [x] 12.0 Frontend Tokens MCP (perfil: gerar/revogar) ✅ CONCLUÍDA
+- [x] 13.0 Servidor MCP (.NET Worker, MCP SDK, ferramentas search/get/list) ✅ CONCLUÍDA
+- [x] 14.0 Observabilidade (Serilog + OpenTelemetry, correlação API <-> MCP) ✅ CONCLUÍDA
+- [x] 15.0 Testes E2E (Playwright) ✅ CONCLUÍDA
 - [ ] 16.0 Dockerização e Docker Compose (API, Frontend, MCP, Postgres)
 - [ ] 17.0 CI/CD (GitHub Actions: build, test, docker publish)
