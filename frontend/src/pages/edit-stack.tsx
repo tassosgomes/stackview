@@ -6,7 +6,15 @@ import { StackForm } from '@/components/stack-form'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/features/auth/use-auth'
-import type { UpdateStackRequest } from '@/types/stack'
+import type { UpdateStackRequest, Technology, StackType } from '@/types/stack'
+
+interface StackFormData {
+  name: string
+  description: string
+  type: StackType
+  isPublic: boolean
+  technologies: Technology[]
+}
 
 export default function EditStackPage() {
   const { id } = useParams<{ id: string }>()
@@ -16,7 +24,7 @@ export default function EditStackPage() {
   const { data: stack, isLoading, isError } = useStack(id!)
   const updateStackMutation = useUpdateStack()
 
-  const handleSubmit = async (formData: any) => {
+  const handleSubmit = async (formData: StackFormData) => {
     if (!stack) return
     
     try {
@@ -25,7 +33,7 @@ export default function EditStackPage() {
         description: formData.description,
         type: formData.type,
         isPublic: formData.isPublic,
-        technologyIds: formData.technologies.map((tech: any) => tech.id)
+        technologyIds: formData.technologies.map((tech: Technology) => tech.id)
       }
 
       await updateStackMutation.mutateAsync({ id: stack.id, data: stackData })
