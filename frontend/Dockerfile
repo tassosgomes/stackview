@@ -23,23 +23,17 @@ COPY nginx.conf /etc/nginx/nginx.conf
 # Copy built application
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Create non-root user for security
-RUN adduser -D -g '' -s /bin/bash -u 1001 appuser
+# Create non-root user for security but keep nginx as root for port binding
+# RUN adduser -D -g '' -s /bin/bash -u 1001 appuser
 
-# Set permissions
-RUN chown -R appuser:appuser /usr/share/nginx/html && \
-    chown -R appuser:appuser /var/cache/nginx && \
-    chown -R appuser:appuser /var/log/nginx && \
-    chown -R appuser:appuser /etc/nginx/conf.d
-
-# Switch to non-root user
-USER appuser
+# Set permissions for nginx user
+RUN chown -R nginx:nginx /usr/share/nginx/html
 
 # Expose port
 EXPOSE 3000
 
-# Health check
+# Health check - usando curl que está disponível no nginx:alpine
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
 
 CMD ["nginx", "-g", "daemon off;"]
