@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 parallelizable: true
 blocked_by: ["9.0","4.0","5.0","8.0","10.0"]
 ---
@@ -25,10 +25,10 @@ Implementar páginas de criação/edição de stacks com editor Markdown, listag
 - Visualização pública de stacks
 
 ## Subtarefas
-- [ ] 11.1 Form e UI com validação
-- [ ] 11.2 Editor Markdown (react-markdown + textarea)
-- [ ] 11.3 Listagem e filtros + paginação
-- [ ] 11.4 View pública detalhada
+- [x] 11.1 Form e UI com validação ✅ CONCLUÍDA
+- [x] 11.2 Editor Markdown (react-markdown + textarea) ✅ CONCLUÍDA 
+- [x] 11.3 Listagem e filtros + paginação ✅ CONCLUÍDA
+- [x] 11.4 View pública detalhada ✅ CONCLUÍDA
 
 ## Sequenciamento
 - Bloqueado por: 9.0, 4.0, 5.0, 8.0, 10.0
