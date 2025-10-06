@@ -29,6 +29,8 @@ jobs:
   update-dotnet-dependencies:
     name: Update .NET Dependencies
     runs-on: ubuntu-latest
+    env:
+      UPDATES_FOUND: 'false'
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -87,6 +89,8 @@ jobs:
   update-npm-dependencies:
     name: Update NPM Dependencies  
     runs-on: ubuntu-latest
+    env:
+      NPM_UPDATES_FOUND: 'false'
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -109,19 +113,22 @@ jobs:
         echo "## NPM Package Updates Available" > ../npm-updates.md
         echo "" >> ../npm-updates.md
         
-        if ncu --format json > updates.json; then
-          if [ -s updates.json ] && [ "$(jq 'length' updates.json)" -gt 0 ]; then
+        if ncu --jsonUpgraded > updates.json 2>/dev/null; then
+          if [ -s updates.json ] && [ "$(jq '. | length' updates.json)" -gt 0 ]; then
             echo "Updates found, creating PR..."
             echo "NPM_UPDATES_FOUND=true" >> $GITHUB_ENV
             
             # Format updates table
             echo "| Package | Current | Latest |" >> ../npm-updates.md
             echo "|---------|---------|--------|" >> ../npm-updates.md
-            jq -r 'to_entries[] | "| \(.key) | \(.value.current // "N/A") | \(.value.wanted // .value) |"' updates.json >> ../npm-updates.md
+            jq -r 'to_entries[] | "| \(.key) | \(.value.from) | \(.value.to) |"' updates.json >> ../npm-updates.md
           else
             echo "No updates found"
             echo "NPM_UPDATES_FOUND=false" >> $GITHUB_ENV
           fi
+        else
+          echo "No updates found or ncu failed"
+          echo "NPM_UPDATES_FOUND=false" >> $GITHUB_ENV
         fi
 
     - name: Update packages (minor and patch only)

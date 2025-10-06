@@ -11,6 +11,7 @@ on:
     paths:
       - 'backend/src/StackShare.McpServer/**'
       - '.github/workflows/mcp.yml'
+  workflow_call:
 
 env:
   DOTNET_VERSION: '8.0.x'
