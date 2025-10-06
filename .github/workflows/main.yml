@@ -45,24 +45,40 @@ jobs:
     if: needs.detect-changes.outputs.backend-changed == 'true'
     uses: ./.github/workflows/backend.yml
     secrets: inherit
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
 
   call-frontend-workflow:
     needs: detect-changes
     if: needs.detect-changes.outputs.frontend-changed == 'true'
     uses: ./.github/workflows/frontend.yml
     secrets: inherit
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
 
   call-mcp-workflow:
     needs: detect-changes
     if: needs.detect-changes.outputs.mcp-changed == 'true'
     uses: ./.github/workflows/mcp.yml
     secrets: inherit
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
 
   full-stack-integration:
     name: Full Stack Integration Test
     runs-on: ubuntu-latest
     needs: [detect-changes, call-backend-workflow, call-frontend-workflow, call-mcp-workflow]
     if: always() && (needs.call-backend-workflow.result == 'success' || needs.call-frontend-workflow.result == 'success' || needs.call-mcp-workflow.result == 'success')
+    
+    permissions:
+      contents: read
+      packages: read
 
     steps:
     - name: Checkout code
