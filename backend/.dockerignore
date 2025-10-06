@@ -1,0 +1,59 @@
+# Backend-specific Docker ignore
+
+# Git and documentation
+.git/
+.gitignore
+*.md
+docs/
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+bin/
+obj/
+**/bin/
+**/obj/
+
+# NuGet packages
+packages/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Test files and coverage
+TestResults/
+[Tt]est[Rr]esult*/
+*.trx
+*.coverage
+*.coveragexml
+
+# ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+# Logs
+logs/
+*.log
+
+# Environment files
+.env*
+!.env.example
+
+# Docker files
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Frontend and other project files
+../frontend/
+../docs/
+../scripts/
+../tasks/
+../rules/
+../templates/
