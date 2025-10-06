@@ -16,6 +16,4 @@ export interface CreateMcpTokenResponse {
   createdAt: string
 }
 
-export interface CreateMcpTokenRequest {
-  // No additional fields needed for basic token creation
-}
+// No additional fields needed for basic token creation - using void instead of empty interface

@@ -28,7 +28,7 @@ export function McpTokensSection() {
       const result = await createTokenMutation.mutateAsync()
       setNewTokenData(result.rawToken)
       setShowTokenDialog(true)
-    } catch (error) {
+    } catch {
       // Error is handled by the mutation hook
     }
   }
@@ -52,7 +52,7 @@ export function McpTokensSection() {
   const handleRevokeToken = async (tokenId: string) => {
     try {
       await revokeTokenMutation.mutateAsync(tokenId)
-    } catch (error) {
+    } catch {
       // Error is handled by the mutation hook
     }
   }
