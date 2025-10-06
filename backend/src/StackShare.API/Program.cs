@@ -13,12 +13,18 @@ using MediatR;
 
 // Configure Serilog
 Log.Logger = new LoggerConfiguration()
-    .WriteTo.Console()
+    .Enrich.FromLogContext()
+    .Enrich.WithProperty("Application", "StackShare.API")
+    .Enrich.WithProperty("Environment", Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production")
+    .Enrich.WithMachineName()
+    .WriteTo.Console(outputTemplate: 
+        "[{Timestamp:HH:mm:ss} {Level:u3}] [{CorrelationId}] {Message:lj} {NewLine}{Exception}")
     .WriteTo.File(
         formatter: new Serilog.Formatting.Compact.CompactJsonFormatter(), 
-        path: "logs/stackshare-.json",
+        path: "logs/api/stackshare-api-.json",
         rollingInterval: RollingInterval.Day,
-        retainedFileCountLimit: 7)
+        retainedFileCountLimit: 7,
+        shared: true)
     .CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
@@ -100,9 +106,40 @@ builder.Services.AddAuthorization();
 builder.Services.AddOpenTelemetry()
     .WithTracing(tracing => tracing
         .SetResourceBuilder(ResourceBuilder.CreateDefault()
-            .AddService("StackShare.API", "1.0.0"))
-        .AddAspNetCoreInstrumentation()
-        .AddHttpClientInstrumentation()
+            .AddService("StackShare.API", "1.0.0")
+            .AddAttributes(new Dictionary<string, object>
+            {
+                ["service.version"] = "1.0.0",
+                ["service.environment"] = builder.Environment.EnvironmentName.ToLowerInvariant(),
+                ["service.instance.id"] = Environment.MachineName
+            }))
+        .AddAspNetCoreInstrumentation(options =>
+        {
+            options.RecordException = true;
+            options.EnrichWithHttpRequest = (activity, httpRequest) =>
+            {
+                activity.SetTag("http.user_agent", httpRequest.Headers.UserAgent.ToString());
+                activity.SetTag("http.request_id", httpRequest.HttpContext.TraceIdentifier);
+            };
+            options.EnrichWithHttpResponse = (activity, httpResponse) =>
+            {
+                activity.SetTag("http.response.status_code", httpResponse.StatusCode);
+            };
+        })
+        .AddHttpClientInstrumentation(options =>
+        {
+            options.RecordException = true;
+            options.EnrichWithHttpRequestMessage = (activity, httpRequestMessage) =>
+            {
+                activity.SetTag("http.client.method", httpRequestMessage.Method.Method);
+                activity.SetTag("http.client.url", httpRequestMessage.RequestUri?.ToString());
+            };
+        })
+        .AddEntityFrameworkCoreInstrumentation(options =>
+        {
+            options.SetDbStatementForText = true;
+            options.SetDbStatementForStoredProcedure = true;
+        })
         .AddConsoleExporter());
 
 // Add Swagger/OpenAPI services
@@ -155,11 +192,22 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+// Add correlation ID middleware (before other middlewares)
+app.UseMiddleware<StackShare.API.Middleware.CorrelationIdMiddleware>();
+
 // Add global exception handling
 app.UseMiddleware<StackShare.API.Middleware.GlobalExceptionMiddleware>();
 
 // Add Serilog request logging
-app.UseSerilogRequestLogging();
+app.UseSerilogRequestLogging(options =>
+{
+    options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
+    {
+        diagnosticContext.Set("CorrelationId", httpContext.TraceIdentifier);
+        diagnosticContext.Set("ClientIP", httpContext.Connection.RemoteIpAddress?.ToString());
+        diagnosticContext.Set("UserAgent", httpContext.Request.Headers.UserAgent.FirstOrDefault()?.ToString());
+    };
+});
 
 // Add Authentication & Authorization
 app.UseAuthentication();
