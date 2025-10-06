@@ -188,12 +188,14 @@ jobs:
         format: 'sarif'
         output: 'trivy-mcp-results.sarif'
 
-    - name: Upload Trivy scan results to GitHub Security tab
+    - name: Upload Trivy scan results to GitHub Security tab (API)
       uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: 'trivy-api-results.sarif'
+        category: 'trivy-api'
 
-    - name: Upload Trivy scan results to GitHub Security tab
+    - name: Upload Trivy scan results to GitHub Security tab (MCP)
       uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: 'trivy-mcp-results.sarif'
+        category: 'trivy-mcp'
