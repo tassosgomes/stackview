@@ -151,7 +151,7 @@ jobs:
         # Wait for API to start and be ready
         echo "Waiting for API to start..."
         for i in {1..30}; do
-          if curl -f http://localhost:5001/health > /dev/null 2>&1; then
+          if curl -f http://localhost:5095/api/health > /dev/null 2>&1; then
             echo "✅ API is ready"
             break
           fi
@@ -159,7 +159,7 @@ jobs:
           sleep 2
         done
         # Verify API is actually running
-        if ! curl -f http://localhost:5001/health > /dev/null 2>&1; then
+        if ! curl -f http://localhost:5095/api/health > /dev/null 2>&1; then
           echo "❌ API failed to start"
           echo "=== API Logs ==="
           cat api.log
@@ -167,14 +167,13 @@ jobs:
         fi
       env:
         ASPNETCORE_ENVIRONMENT: Testing
-        ASPNETCORE_URLS: http://+:5001
         ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=stackshare_test;Username=postgres;Password=postgres"
 
     - name: Start MCP Server with Docker
       run: |
         docker run -d --name mcp-server \
           --network host \
-          -e StackShareApi__BaseUrl=http://localhost:5001/api \
+          -e StackShareApi__BaseUrl=http://localhost:5095/api \
           -e MCP_API_KEY=test-key \
           -e ASPNETCORE_ENVIRONMENT=Testing \
           ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
@@ -191,15 +190,25 @@ jobs:
           exit 1
         fi
         
-        # Check MCP server logs for successful startup
-        if docker logs mcp-server 2>&1 | grep -q "Servidor MCP iniciado com sucesso"; then
-          echo "✅ MCP Server started successfully"
+        # Check MCP server logs for startup indicators
+        # Note: MCP Server is stdio-based and waits for input, so "iniciado com sucesso" may not appear
+        if docker logs mcp-server 2>&1 | grep -q "Registrando ferramentas MCP"; then
+          echo "✅ MCP Server registered tools successfully"
         elif docker logs mcp-server 2>&1 | grep -q "Iniciando StackShare MCP Server"; then
           echo "✅ MCP Server is starting up"
         else
           echo "❌ MCP Server startup logs not found"
           echo "=== MCP Server Logs ==="
           docker logs mcp-server
+          exit 1
+        fi
+        
+        # Test basic functionality by checking if API is accessible from container perspective
+        echo "Testing API accessibility..."
+        if curl -f http://localhost:5095/api/health > /dev/null 2>&1; then
+          echo "✅ API is accessible for MCP Server integration"
+        else
+          echo "❌ API is not accessible for integration"
           exit 1
         fi
 
