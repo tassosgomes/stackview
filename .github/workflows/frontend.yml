@@ -154,7 +154,7 @@ jobs:
         for i in {1..60}; do
           echo "Attempt $i/60: Checking API health..."
           
-          if curl -f -s http://localhost:5095/api/health > /dev/null 2>&1; then
+          if curl -f -s http://localhost:5095/api/Health > /dev/null 2>&1; then
             echo "✅ API is healthy and ready!"
             echo "📋 API logs (last 20 lines):"
             tail -20 ../api.log || echo "No logs available yet"
@@ -176,7 +176,7 @@ jobs:
         done
         
         echo "🎯 Final API health check:"
-        curl -v http://localhost:5095/api/health || true
+        curl -v http://localhost:5095/api/Health || true
       env:
         ASPNETCORE_ENVIRONMENT: Testing
         ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=stackshare_test;Username=postgres;Password=postgres"
@@ -262,11 +262,11 @@ jobs:
           curl -I http://localhost:4173 || true
         fi
         
-        if curl -f -s http://localhost:5095/api/health > /dev/null; then
+        if curl -f -s http://localhost:5095/api/Health > /dev/null; then
           echo "✅ Backend API is responsive"
         else
           echo "❌ Backend API is not responsive"
-          curl -I http://localhost:5095/api/health || true
+          curl -I http://localhost:5095/api/Health || true
         fi
         
         # Run tests with timeout and progress reporting

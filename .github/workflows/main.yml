@@ -118,7 +118,7 @@ jobs:
     - name: Run health checks
       run: |
         # Test API health
-        curl -f http://localhost:5001/health || exit 1
+        curl -f http://localhost:5001/api/Health || exit 1
         
         # Test frontend availability  
         curl -f http://localhost:3000 || exit 1

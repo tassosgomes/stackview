@@ -190,7 +190,7 @@ jobs:
         
         # Verify deployment
         echo "✅ Checking service health..."
-        if curl -f http://localhost:5001/health >/dev/null 2>&1; then
+        if curl -f http://localhost:5001/api/Health >/dev/null 2>&1; then
           echo "✅ API is healthy"
         else
           echo "❌ API health check failed"

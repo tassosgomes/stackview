@@ -151,7 +151,7 @@ jobs:
         # Wait for API to start and be ready
         echo "Waiting for API to start..."
         for i in {1..30}; do
-          if curl -f http://localhost:5095/api/health > /dev/null 2>&1; then
+          if curl -f http://localhost:5095/api/Health > /dev/null 2>&1; then
             echo "✅ API is ready"
             break
           fi
@@ -159,7 +159,7 @@ jobs:
           sleep 2
         done
         # Verify API is actually running
-        if ! curl -f http://localhost:5095/api/health > /dev/null 2>&1; then
+        if ! curl -f http://localhost:5095/api/Health > /dev/null 2>&1; then
           echo "❌ API failed to start"
           echo "=== API Logs ==="
           cat api.log
@@ -205,7 +205,7 @@ jobs:
         
         # Test basic functionality by checking if API is accessible from container perspective
         echo "Testing API accessibility..."
-        if curl -f http://localhost:5095/api/health > /dev/null 2>&1; then
+        if curl -f http://localhost:5095/api/Health > /dev/null 2>&1; then
           echo "✅ API is accessible for MCP Server integration"
         else
           echo "❌ API is not accessible for integration"
