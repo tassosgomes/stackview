@@ -1,5 +1,6 @@
 using StackShare.McpServer.Models;
 using System.Text.Json;
+using System.Diagnostics;
 
 namespace StackShare.McpServer.Services;
 
@@ -64,9 +65,13 @@ public class StackShareApiClient : IStackShareApiClient
 
             var url = $"api/stacks?{string.Join("&", queryString)}";
             
+            // Create request message to add correlation header
+            using var request = new HttpRequestMessage(HttpMethod.Get, url);
+            AddCorrelationIdHeader(request);
+            
             _logger.LogInformation("Fazendo requisição GET para: {Url}", url);
             
-            var response = await _httpClient.GetAsync(url, cancellationToken);
+            var response = await _httpClient.SendAsync(request, cancellationToken);
             response.EnsureSuccessStatusCode();
 
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -89,9 +94,13 @@ public class StackShareApiClient : IStackShareApiClient
         {
             var url = $"api/stacks/{id}";
             
+            // Create request message to add correlation header
+            using var request = new HttpRequestMessage(HttpMethod.Get, url);
+            AddCorrelationIdHeader(request);
+            
             _logger.LogInformation("Fazendo requisição GET para: {Url}", url);
             
-            var response = await _httpClient.GetAsync(url, cancellationToken);
+            var response = await _httpClient.SendAsync(request, cancellationToken);
             response.EnsureSuccessStatusCode();
 
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -121,9 +130,13 @@ public class StackShareApiClient : IStackShareApiClient
 
             var url = $"api/technologies?{string.Join("&", queryString)}";
             
+            // Create request message to add correlation header
+            using var request = new HttpRequestMessage(HttpMethod.Get, url);
+            AddCorrelationIdHeader(request);
+            
             _logger.LogInformation("Fazendo requisição GET para: {Url}", url);
             
-            var response = await _httpClient.GetAsync(url, cancellationToken);
+            var response = await _httpClient.SendAsync(request, cancellationToken);
             response.EnsureSuccessStatusCode();
 
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -138,5 +151,19 @@ public class StackShareApiClient : IStackShareApiClient
             _logger.LogError(ex, "Erro ao buscar tecnologias");
             throw;
         }
+    }
+
+    private void AddCorrelationIdHeader(HttpRequestMessage request)
+    {
+        var correlationId = Activity.Current?.GetTagItem("correlation_id")?.ToString() 
+                           ?? Activity.Current?.TraceId.ToString() 
+                           ?? Guid.NewGuid().ToString();
+        
+        request.Headers.Add("X-Correlation-ID", correlationId);
+        
+        // Also add to current activity for tracing
+        Activity.Current?.SetTag("correlation_id", correlationId);
+        
+        _logger.LogDebug("Adicionando Correlation-ID ao request: {CorrelationId}", correlationId);
     }
 }

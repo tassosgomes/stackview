@@ -2,6 +2,8 @@ using MCPSharp;
 using StackShare.McpServer.Services;
 using StackShare.McpServer.Models;
 using System.Text.Json;
+using System.Diagnostics;
+using Serilog.Context;
 
 namespace StackShare.McpServer.Tools;
 
@@ -12,6 +14,7 @@ public class StackShareTools
 {
     private static IStackShareApiClient? _apiClient;
     private static ILogger<StackShareTools>? _logger;
+    private static readonly ActivitySource ActivitySource = new("StackShare.McpServer.Tools");
 
     public static void Initialize(IStackShareApiClient apiClient, ILogger<StackShareTools> logger)
     {
@@ -36,13 +39,24 @@ public class StackShareTools
         [McpParameter(false, "Página da paginação")] int page = 1,
         [McpParameter(false, "Tamanho da página")] int pageSize = 10)
     {
-        try
+        using var activity = ActivitySource.StartActivity("search_stacks");
+        activity?.SetTag("mcp.tool", "search_stacks");
+        activity?.SetTag("search", search);
+        activity?.SetTag("type", type);
+        activity?.SetTag("technology", technologyName);
+        activity?.SetTag("page", page);
+        
+        var correlationId = Activity.Current?.TraceId.ToString() ?? Guid.NewGuid().ToString();
+        
+        using (LogContext.PushProperty("CorrelationId", correlationId))
         {
-            if (_apiClient == null || _logger == null)
-                throw new InvalidOperationException("StackShareTools não foi inicializado");
+            try
+            {
+                if (_apiClient == null || _logger == null)
+                    throw new InvalidOperationException("StackShareTools não foi inicializado");
 
-            _logger.LogInformation("Buscando stacks - Search: {Search}, Type: {Type}, Technology: {Technology}, Page: {Page}", 
-                search, type, technologyName, page);
+                _logger.LogInformation("Buscando stacks - Search: {Search}, Type: {Type}, Technology: {Technology}, Page: {Page}", 
+                    search, type, technologyName, page);
 
             Guid? technologyId = null;
             if (!string.IsNullOrEmpty(technologyName))
@@ -95,17 +109,18 @@ public class StackShareTools
                 }
             };
 
-            return JsonSerializer.Serialize(response, new JsonSerializerOptions { WriteIndented = true });
-        }
-        catch (Exception ex)
-        {
-            _logger?.LogError(ex, "Erro ao buscar stacks");
-            return JsonSerializer.Serialize(new
+                return JsonSerializer.Serialize(response, new JsonSerializerOptions { WriteIndented = true });
+            }
+            catch (Exception ex)
             {
-                success = false,
-                error = "Erro interno do servidor ao buscar stacks",
-                message = ex.Message
-            });
+                _logger?.LogError(ex, "Erro ao buscar stacks");
+                return JsonSerializer.Serialize(new
+                {
+                    success = false,
+                    error = "Erro interno do servidor ao buscar stacks",
+                    message = ex.Message
+                });
+            }
         }
     }
 

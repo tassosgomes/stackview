@@ -1,7 +1,8 @@
 ---
-status: pending
+status: completed
 parallelizable: true
 blocked_by: ["1.0","4.0"]
+completed_date: 2025-10-05
 ---
 
 <task_context>
@@ -24,9 +25,9 @@ Concluir configuração de logs estruturados e tracing distribuído, adicionando
 - Correlation/RequestId em responses
 
 ## Subtarefas
-- [ ] 14.1 Configurar propagadores e instrumentações
-- [ ] 14.2 Correlacionar logs API e MCP
-- [ ] 14.3 Documentar troubleshooting observabilidade
+- [x] 14.1 Configurar propagadores e instrumentações ✅ CONCLUÍDA
+- [x] 14.2 Correlacionar logs API e MCP ✅ CONCLUÍDA  
+- [x] 14.3 Documentar troubleshooting observabilidade ✅ CONCLUÍDA
 
 ## Sequenciamento
 - Bloqueado por: 1.0, 4.0
@@ -37,4 +38,7 @@ Concluir configuração de logs estruturados e tracing distribuído, adicionando
 TechSpec seção 8.
 
 ## Critérios de Sucesso
-- Traces mostram fluxo MCP -> API -> DB
+- ✅ Traces mostram fluxo MCP -> API -> DB
+- ✅ Correlation IDs funcionando entre serviços
+- ✅ Logs estruturados em JSON
+- ✅ Documentação de troubleshooting criada
