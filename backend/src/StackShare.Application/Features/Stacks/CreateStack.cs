@@ -99,7 +99,7 @@ public class CreateStackHandler : IRequestHandler<CreateStackRequest, StackRespo
 
             if (existingTechById.Count != request.TechnologyIds.Count)
             {
-                throw new InvalidOperationException("Uma ou mais tecnologias por ID não foram encontradas ou estão inativas");
+                throw new ArgumentException("Uma ou mais tecnologias por ID não foram encontradas ou estão inativas");
             }
 
             allTechnologyIds.AddRange(existingTechById.Select(t => t.Id));
