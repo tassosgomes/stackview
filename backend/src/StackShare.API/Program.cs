@@ -152,6 +152,9 @@ builder.Services.AddSwaggerGen(c =>
         Version = "v1" 
     });
     
+    // Custom SchemaId to avoid conflicts between classes with same name in different namespaces
+    c.CustomSchemaIds(type => type.FullName?.Replace("+", "."));
+    
     // Add JWT Authentication to Swagger
     c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
