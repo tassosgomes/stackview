@@ -133,6 +133,11 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y curl netcat-openbsd
+
     - name: Pull MCP Docker image
       run: docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
 
@@ -141,32 +146,79 @@ jobs:
       run: |
         dotnet restore
         dotnet build
-        dotnet run --project src/StackShare.API &
-        sleep 30
+        # Start API in background
+        nohup dotnet run --project src/StackShare.API > api.log 2>&1 &
+        # Wait for API to start and be ready
+        echo "Waiting for API to start..."
+        for i in {1..30}; do
+          if curl -f http://localhost:5001/health > /dev/null 2>&1; then
+            echo "✅ API is ready"
+            break
+          fi
+          echo "Waiting for API... attempt $i/30"
+          sleep 2
+        done
+        # Verify API is actually running
+        if ! curl -f http://localhost:5001/health > /dev/null 2>&1; then
+          echo "❌ API failed to start"
+          echo "=== API Logs ==="
+          cat api.log
+          exit 1
+        fi
       env:
         ASPNETCORE_ENVIRONMENT: Testing
+        ASPNETCORE_URLS: http://+:5001
         ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=stackshare_test;Username=postgres;Password=postgres"
 
     - name: Start MCP Server with Docker
       run: |
         docker run -d --name mcp-server \
           --network host \
-          -e API_BASE_URL=http://localhost:5001/api \
+          -e StackShareApi__BaseUrl=http://localhost:5001/api \
           -e MCP_API_KEY=test-key \
+          -e ASPNETCORE_ENVIRONMENT=Testing \
           ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-        sleep 10
+        sleep 15
 
-    - name: Test MCP Server connectivity
+    - name: Test MCP Server health
       run: |
-        # Test if MCP server is responding (adjust based on your MCP implementation)
-        timeout 30 bash -c 'until nc -z localhost 5002; do sleep 1; done'
-        echo "MCP Server is responding"
+        # Check if MCP server container is running
+        if docker ps | grep -q mcp-server; then
+          echo "✅ MCP Server container is running"
+        else
+          echo "❌ MCP Server container is not running"
+          docker logs mcp-server
+          exit 1
+        fi
+        
+        # Check MCP server logs for successful startup
+        if docker logs mcp-server 2>&1 | grep -q "Servidor MCP iniciado com sucesso"; then
+          echo "✅ MCP Server started successfully"
+        elif docker logs mcp-server 2>&1 | grep -q "Iniciando StackShare MCP Server"; then
+          echo "✅ MCP Server is starting up"
+        else
+          echo "❌ MCP Server startup logs not found"
+          echo "=== MCP Server Logs ==="
+          docker logs mcp-server
+          exit 1
+        fi
+
+    - name: Collect logs on failure
+      if: failure()
+      run: |
+        echo "=== API Logs ==="
+        cat api.log || echo "No API logs found"
+        echo ""
+        echo "=== MCP Server Logs ==="
+        docker logs mcp-server || echo "No MCP server logs found"
 
     - name: Cleanup
       if: always()
       run: |
         docker stop mcp-server || true
         docker rm mcp-server || true
+        # Kill any remaining API process
+        pkill -f "dotnet run --project src/StackShare.API" || true
 
   security-scan:
     name: Security Scan
