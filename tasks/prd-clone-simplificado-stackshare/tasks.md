@@ -12,7 +12,7 @@
 - [x] 8.0 Testes Backend (unitários + integração com Testcontainers) ✅ CONCLUÍDA
 - [x] 9.0 Frontend Setup (Vite React TS, Tailwind, Shadcn, Router, React Query, Axios) ✅ CONCLUÍDA
 - [x] 10.0 Frontend Autenticação e Dashboard ✅ CONCLUÍDA
-- [ ] 11.0 Frontend Stacks (CRUD, Markdown, filtros e busca)
+- [x] 11.0 Frontend Stacks (CRUD, Markdown, filtros e busca) ✅ CONCLUÍDA
 - [ ] 12.0 Frontend Tokens MCP (perfil: gerar/revogar)
 - [ ] 13.0 Servidor MCP (.NET Worker, MCP SDK, ferramentas search/get/list)
 - [ ] 14.0 Observabilidade (Serilog + OpenTelemetry, correlação API <-> MCP)

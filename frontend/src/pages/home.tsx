@@ -9,30 +9,36 @@ export function HomePage() {
   return (
     <div className="space-y-8">
       <div className="text-center space-y-4">
-        <h1 className="text-4xl font-bold tracking-tight">Welcome to StackShare</h1>
+        <h1 className="text-4xl font-bold tracking-tight">Bem-vindo ao StackShare</h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Share and discover tech stacks from developers around the world. 
-          Document your technology decisions and connect with AI assistants for smart queries.
+          Compartilhe e descubra tech stacks de desenvolvedores ao redor do mundo. 
+          Documente suas decisões tecnológicas e conecte com assistentes de IA para consultas inteligentes.
         </p>
         
         {!isAuthenticated && (
-          <div className="flex justify-center space-x-4 pt-4">
+          <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4">
             <Button asChild size="lg">
-              <Link to="/register">Get Started</Link>
+              <Link to="/register">Começar</Link>
             </Button>
             <Button asChild variant="outline" size="lg">
-              <Link to="/login">Sign In</Link>
+              <Link to="/login">Entrar</Link>
+            </Button>
+            <Button asChild variant="secondary" size="lg">
+              <Link to="/explore">Explorar Stacks</Link>
             </Button>
           </div>
         )}
 
         {isAuthenticated && (
-          <div className="flex justify-center space-x-4 pt-4">
+          <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4">
             <Button asChild size="lg">
-              <Link to="/dashboard">Go to Dashboard</Link>
+              <Link to="/dashboard">Ir ao Dashboard</Link>
             </Button>
             <Button asChild variant="outline" size="lg">
-              <Link to="/explore">Explore Stacks</Link>
+              <Link to="/stacks/create">Criar Stack</Link>
+            </Button>
+            <Button asChild variant="secondary" size="lg">
+              <Link to="/explore">Explorar Stacks</Link>
             </Button>
           </div>
         )}
@@ -41,30 +47,30 @@ export function HomePage() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader>
-            <CardTitle>Create Stacks</CardTitle>
+            <CardTitle>Criar Stacks</CardTitle>
             <CardDescription>
-              Document your technology decisions with detailed descriptions in Markdown. 
-              Organize by Frontend, Backend, Mobile, DevOps, Data, and Testing categories.
+              Documente suas decisões tecnológicas com descrições detalhadas em Markdown. 
+              Organize por categorias: Frontend, Backend, Mobile, DevOps, Data e Testing.
             </CardDescription>
           </CardHeader>
         </Card>
         
         <Card>
           <CardHeader>
-            <CardTitle>Discover Technologies</CardTitle>
+            <CardTitle>Descobrir Tecnologias</CardTitle>
             <CardDescription>
-              Find out how others are using your favorite technologies. 
-              Search and filter by technology type to discover new approaches.
+              Descubra como outros estão usando suas tecnologias favoritas. 
+              Busque e filtre por tipo de tecnologia para descobrir novas abordagens.
             </CardDescription>
           </CardHeader>
         </Card>
         
         <Card>
           <CardHeader>
-            <CardTitle>AI Integration</CardTitle>
+            <CardTitle>Integração com IA</CardTitle>
             <CardDescription>
-              Generate personal access tokens to connect with AI assistants like 
-              GitHub Copilot and Claude via Model Context Protocol (MCP).
+              Gere tokens de acesso pessoal para conectar com assistentes de IA como 
+              GitHub Copilot e Claude via Model Context Protocol (MCP).
             </CardDescription>
           </CardHeader>
         </Card>
