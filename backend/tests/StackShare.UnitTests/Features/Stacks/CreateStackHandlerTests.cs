@@ -104,7 +104,7 @@ public class CreateStackHandlerTests : IDisposable
 
         // Act & Assert
         var act = () => _handler.Handle(request, CancellationToken.None);
-        await act.Should().ThrowAsync<ArgumentException>()
+        await act.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("Uma ou mais tecnologias por ID não foram encontradas ou estão inativas");
     }
 
