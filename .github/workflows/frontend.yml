@@ -398,16 +398,41 @@ jobs:
 
     steps:
     - name: Run Trivy vulnerability scanner
-      uses: aquasecurity/trivy-action@master
+      uses: aquasecurity/trivy-action@0.28.0
       with:
         image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
         format: 'sarif'
         output: 'trivy-results.sarif'
+        severity: 'CRITICAL,HIGH,MEDIUM'
+        exit-code: '0'
+
+    - name: Verify SARIF file exists
+      run: |
+        if [ -f "trivy-results.sarif" ]; then
+          echo "✅ SARIF file exists and is readable"
+          echo "📊 File size: $(wc -c < trivy-results.sarif) bytes"
+          echo "📋 File content preview:"
+          head -20 trivy-results.sarif || echo "Could not preview file"
+        else
+          echo "❌ SARIF file not found"
+          ls -la *.sarif 2>/dev/null || echo "No SARIF files found"
+          exit 1
+        fi
 
     - name: Upload Trivy scan results to GitHub Security tab
       uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: 'trivy-results.sarif'
+      continue-on-error: true
+      if: success()
+
+    - name: Upload Trivy scan results as artifact (fallback)
+      uses: actions/upload-artifact@v4
+      with:
+        name: trivy-security-scan-results
+        path: 'trivy-results.sarif'
+        retention-days: 30
+      if: always()
 
   lighthouse:
     name: Lighthouse Performance Audit
