@@ -53,9 +53,9 @@ describe('DashboardPage', () => {
       </TestWrapper>
     )
 
-    expect(screen.getByText(/welcome back, test user/i)).toBeInTheDocument()
-    expect(screen.getByText(/my stacks/i)).toBeInTheDocument()
-    expect(screen.getAllByText(/mcp tokens/i)).toHaveLength(2) // Appears in header description and card title
+    expect(screen.getByText(/bem-vindo, test user/i)).toBeInTheDocument()
+    expect(screen.getByText(/meus stacks/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/tokens mcp/i)).toHaveLength(2) // Appears in header description and card title
   })
 
   it('shows empty state when user has no stacks', () => {
@@ -65,7 +65,7 @@ describe('DashboardPage', () => {
       </TestWrapper>
     )
 
-    expect(screen.getByText(/you haven't created any stacks yet/i)).toBeInTheDocument()
-    expect(screen.getByText(/loading stacks/i)).toBeInTheDocument()
+    expect(screen.getByText(/você ainda não criou nenhum stack/i)).toBeInTheDocument()
+    expect(screen.getByText(/carregando stacks/i)).toBeInTheDocument()
   })
 })
