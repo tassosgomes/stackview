@@ -141,7 +141,7 @@ jobs:
     - name: Build and push API image
       uses: docker/build-push-action@v5
       with:
-        context: .
+        context: ./backend
         file: ./backend/src/StackShare.API/Dockerfile
         push: true
         tags: ${{ steps.meta-api.outputs.tags }}
@@ -153,7 +153,7 @@ jobs:
     - name: Build and push MCP image
       uses: docker/build-push-action@v5
       with:
-        context: .
+        context: ./backend
         file: ./backend/src/StackShare.McpServer/Dockerfile
         push: true
         tags: ${{ steps.meta-mcp.outputs.tags }}
