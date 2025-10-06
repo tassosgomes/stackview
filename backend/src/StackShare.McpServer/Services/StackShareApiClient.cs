@@ -11,10 +11,11 @@ public interface IStackShareApiClient
         string? type = null, 
         Guid? technologyId = null, 
         string? search = null, 
-        bool? onlyPublic = true);
+        bool? onlyPublic = true,
+        CancellationToken cancellationToken = default);
     
-    Task<StackResponse> GetStackByIdAsync(Guid id);
-    Task<PagedResult<TechnologyDto>> GetTechnologiesAsync(int page = 1, int pageSize = 20, string? search = null);
+    Task<StackResponse> GetStackByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<PagedResult<TechnologyDto>> GetTechnologiesAsync(int page = 1, int pageSize = 20, string? search = null, CancellationToken cancellationToken = default);
 }
 
 public class StackShareApiClient : IStackShareApiClient
@@ -40,7 +41,8 @@ public class StackShareApiClient : IStackShareApiClient
         string? type = null, 
         Guid? technologyId = null, 
         string? search = null, 
-        bool? onlyPublic = true)
+        bool? onlyPublic = true,
+        CancellationToken cancellationToken = default)
     {
         try
         {
@@ -64,10 +66,10 @@ public class StackShareApiClient : IStackShareApiClient
             
             _logger.LogInformation("Fazendo requisição GET para: {Url}", url);
             
-            var response = await _httpClient.GetAsync(url);
+            var response = await _httpClient.GetAsync(url, cancellationToken);
             response.EnsureSuccessStatusCode();
 
-            var content = await response.Content.ReadAsStringAsync();
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
             var result = JsonSerializer.Deserialize<PagedResult<StackSummaryResponse>>(content, _jsonOptions);
 
             _logger.LogInformation("Requisição bem-sucedida. Retornando {Count} stacks", result?.Items.Count ?? 0);
@@ -81,7 +83,7 @@ public class StackShareApiClient : IStackShareApiClient
         }
     }
 
-    public async Task<StackResponse> GetStackByIdAsync(Guid id)
+    public async Task<StackResponse> GetStackByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -89,10 +91,10 @@ public class StackShareApiClient : IStackShareApiClient
             
             _logger.LogInformation("Fazendo requisição GET para: {Url}", url);
             
-            var response = await _httpClient.GetAsync(url);
+            var response = await _httpClient.GetAsync(url, cancellationToken);
             response.EnsureSuccessStatusCode();
 
-            var content = await response.Content.ReadAsStringAsync();
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
             var result = JsonSerializer.Deserialize<StackResponse>(content, _jsonOptions);
 
             _logger.LogInformation("Stack obtido com sucesso: {StackName}", result?.Name ?? "N/A");
@@ -106,7 +108,7 @@ public class StackShareApiClient : IStackShareApiClient
         }
     }
 
-    public async Task<PagedResult<TechnologyDto>> GetTechnologiesAsync(int page = 1, int pageSize = 20, string? search = null)
+    public async Task<PagedResult<TechnologyDto>> GetTechnologiesAsync(int page = 1, int pageSize = 20, string? search = null, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -121,10 +123,10 @@ public class StackShareApiClient : IStackShareApiClient
             
             _logger.LogInformation("Fazendo requisição GET para: {Url}", url);
             
-            var response = await _httpClient.GetAsync(url);
+            var response = await _httpClient.GetAsync(url, cancellationToken);
             response.EnsureSuccessStatusCode();
 
-            var content = await response.Content.ReadAsStringAsync();
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
             var result = JsonSerializer.Deserialize<PagedResult<TechnologyDto>>(content, _jsonOptions);
 
             _logger.LogInformation("Requisição bem-sucedida. Retornando {Count} tecnologias", result?.Items.Count ?? 0);

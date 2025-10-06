@@ -114,7 +114,10 @@ public class BasicIntegrationTests
         }
     }
 
-    public static async Task Main(string[] args)
+    /// <summary>
+    /// Executa todos os testes de integração
+    /// </summary>
+    public static async Task RunAllTestsAsync()
     {
         Console.WriteLine("=== Teste de Integração do MCP Server StackShare ===");
         Console.WriteLine();
@@ -128,7 +131,7 @@ public class BasicIntegrationTests
         catch (Exception ex)
         {
             Console.WriteLine($"❌ Testes falharam: {ex.Message}");
-            Environment.Exit(1);
+            throw;
         }
 
         Console.WriteLine();
