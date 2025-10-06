@@ -301,6 +301,19 @@ FakesAssemblies/
 .ntvs_analysis.dat
 node_modules/
 
+# Frontend build and test artifacts
+frontend/dist/
+frontend/build/
+frontend/.next/
+frontend/out/
+frontend/coverage/
+frontend/playwright-report/
+frontend/test-results/
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
 # Visual Studio 6 build log
 *.plg
 
