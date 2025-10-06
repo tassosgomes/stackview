@@ -141,9 +141,13 @@ export function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button disabled>Gerar Token</Button>
+            <Button asChild className="w-full">
+              <Link to="/profile">
+                Gerenciar Tokens MCP
+              </Link>
+            </Button>
             <p className="text-xs text-muted-foreground mt-2">
-              Disponível na Tarefa 12.0
+              Acesse seu perfil para gerar e gerenciar tokens
             </p>
           </CardContent>
         </Card>

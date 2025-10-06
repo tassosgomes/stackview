@@ -1,7 +1,8 @@
 ---
-status: pending
+status: completed
 parallelizable: true
 blocked_by: ["9.0","6.0","10.0"]
+completed_at: 2025-10-05
 ---
 
 <task_context>
@@ -24,9 +25,9 @@ Implementar seção "Acesso IA" no perfil do usuário para gerar e revogar token
 - Ação de revogar token
 
 ## Subtarefas
-- [ ] 12.1 Componente de perfil e listagem
-- [ ] 12.2 Fluxo de geração (modal com cópia do token)
-- [ ] 12.3 Fluxo de revogação
+- [x] 12.1 Componente de perfil e listagem ✅ CONCLUÍDA
+- [x] 12.2 Fluxo de geração (modal com cópia do token) ✅ CONCLUÍDA
+- [x] 12.3 Fluxo de revogação ✅ CONCLUÍDA
 
 ## Sequenciamento
 - Bloqueado por: 9.0, 6.0, 10.0
