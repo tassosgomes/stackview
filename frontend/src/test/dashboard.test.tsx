@@ -55,7 +55,7 @@ describe('DashboardPage', () => {
 
     expect(screen.getByText(/bem-vindo, test user/i)).toBeInTheDocument()
     expect(screen.getByText(/meus stacks/i)).toBeInTheDocument()
-    expect(screen.getAllByText(/tokens mcp/i)).toHaveLength(2) // Appears in header description and card title
+    expect(screen.getByText(/gerenciar tokens mcp/i)).toBeInTheDocument() // Link to profile
   })
 
   it('shows empty state when user has no stacks', () => {

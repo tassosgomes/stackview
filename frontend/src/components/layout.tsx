@@ -50,6 +50,9 @@ export function Layout({ className }: LayoutProps) {
                   <Button asChild variant="ghost">
                     <Link to="/dashboard">Dashboard</Link>
                   </Button>
+                  <Button asChild variant="ghost">
+                    <Link to="/profile">Perfil</Link>
+                  </Button>
                   <Button variant="outline" onClick={logout}>
                     Sair
                   </Button>

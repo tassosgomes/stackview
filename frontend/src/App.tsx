@@ -7,6 +7,7 @@ import { HomePage } from '@/pages/home'
 import { LoginPage } from '@/pages/login'
 import { RegisterPage } from '@/pages/register'
 import { DashboardPage } from '@/pages/dashboard'
+import { ProfilePage } from '@/pages/profile'
 import ExplorePage from '@/pages/explore'
 import CreateStackPage from '@/pages/create-stack'
 import StackDetailPage from '@/pages/stack-detail'
@@ -28,6 +29,11 @@ function App() {
               <Route path="dashboard" element={
                 <ProtectedRoute>
                   <DashboardPage />
+                </ProtectedRoute>
+              } />
+              <Route path="profile" element={
+                <ProtectedRoute>
+                  <ProfilePage />
                 </ProtectedRoute>
               } />
               <Route path="stacks/create" element={
