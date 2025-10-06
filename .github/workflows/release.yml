@@ -91,10 +91,10 @@ jobs:
         component:
           - name: api
             dockerfile: ./backend/src/StackShare.API/Dockerfile
-            context: .
+            context: ./backend
           - name: mcp
             dockerfile: ./backend/src/StackShare.McpServer/Dockerfile
-            context: .
+            context: ./backend
           - name: frontend
             dockerfile: ./frontend/Dockerfile
             context: ./frontend
