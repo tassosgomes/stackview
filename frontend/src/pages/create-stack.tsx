@@ -3,20 +3,28 @@ import { toast } from 'sonner'
 import { StackForm } from '@/components/stack-form'
 import { useCreateStack } from '@/hooks/use-stacks'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import type { CreateStackRequest } from '@/types/stack'
+import type { CreateStackRequest, Technology, StackType } from '@/types/stack'
+
+interface StackFormData {
+  name: string
+  description: string
+  type: StackType
+  isPublic: boolean
+  technologies: Technology[]
+}
 
 export default function CreateStackPage() {
   const navigate = useNavigate()
   const createStackMutation = useCreateStack()
 
-  const handleSubmit = async (formData: any) => {
+  const handleSubmit = async (formData: StackFormData) => {
     try {
       const stackData: CreateStackRequest = {
         name: formData.name,
         description: formData.description,
         type: formData.type,
         isPublic: formData.isPublic,
-        technologyIds: formData.technologies.map((tech: any) => tech.id)
+        technologyIds: formData.technologies.map((tech: Technology) => tech.id)
       }
 
       await createStackMutation.mutateAsync(stackData)
