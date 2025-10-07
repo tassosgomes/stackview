@@ -18,16 +18,38 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const storedToken = localStorage.getItem('authToken')
     const storedUser = localStorage.getItem('authUser')
 
-    if (storedToken && storedUser) {
-      setToken(storedToken)
-      try {
-        setUser(JSON.parse(storedUser))
-      } catch (error) {
-        console.error('Error parsing stored user:', error)
-        localStorage.removeItem('authToken')
-        localStorage.removeItem('authUser')
+    const init = async () => {
+      if (storedToken && storedUser && storedUser !== 'undefined') {
+        setToken(storedToken)
+        try {
+          setUser(JSON.parse(storedUser))
+        } catch (error) {
+          console.error('Error parsing stored user:', error)
+          localStorage.removeItem('authToken')
+          localStorage.removeItem('authUser')
+        }
+      } else if (storedToken && (!storedUser || storedUser === 'undefined')) {
+        // Try to refresh user data from API when there is a token but no stored user
+        try {
+          const refreshed = await authApi.refreshToken()
+          if (refreshed?.token) {
+            localStorage.setItem('authToken', refreshed.token)
+            setToken(refreshed.token)
+          }
+          if (refreshed?.user) {
+            localStorage.setItem('authUser', JSON.stringify(refreshed.user))
+            setUser(refreshed.user)
+          }
+        } catch (error) {
+          console.error('Failed to refresh auth on init:', error)
+          // If refresh fails, clear token to avoid inconsistent state
+          localStorage.removeItem('authToken')
+          localStorage.removeItem('authUser')
+        }
       }
     }
+
+    void init()
 
     setIsLoading(false)
   }, [])
@@ -35,14 +57,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const login = async (credentials: LoginRequest) => {
     setIsLoading(true)
     try {
-      const { user, token } = await authApi.login(credentials)
-      
-      // Store token and user data
-      localStorage.setItem('authToken', token)
-      localStorage.setItem('authUser', JSON.stringify(user))
-      
-      setToken(token)
-      setUser(user)
+      let { user, token } = await authApi.login(credentials)
+
+      // If the API returned no user (only token), try to refresh/populate user
+      if (!user) {
+        try {
+          const refreshed = await authApi.refreshToken()
+          if (refreshed?.token) token = refreshed.token
+          if (refreshed?.user) user = refreshed.user
+        } catch (err) {
+          console.warn('No user returned on login and refreshToken failed', err)
+        }
+      }
+
+      // Store token and user data (guard against undefined)
+      if (token) {
+        localStorage.setItem('authToken', token)
+        setToken(token)
+      }
+
+      if (user) {
+        localStorage.setItem('authUser', JSON.stringify(user))
+        setUser(user)
+      } else {
+        localStorage.removeItem('authUser')
+      }
     } finally {
       setIsLoading(false)
     }
@@ -51,14 +90,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const register = async (userData: RegisterRequest) => {
     setIsLoading(true)
     try {
-      const { user, token } = await authApi.register(userData)
-      
-      // Store token and user data
-      localStorage.setItem('authToken', token)
-      localStorage.setItem('authUser', JSON.stringify(user))
-      
-      setToken(token)
-      setUser(user)
+      let { user, token } = await authApi.register(userData)
+
+      // If register didn't return user (unlikely), attempt refresh
+      if (!user) {
+        try {
+          const refreshed = await authApi.refreshToken()
+          if (refreshed?.token) token = refreshed.token
+          if (refreshed?.user) user = refreshed.user
+        } catch (err) {
+          console.warn('No user returned on register and refreshToken failed', err)
+        }
+      }
+
+      // Store token and user data (guard against undefined)
+      if (token) {
+        localStorage.setItem('authToken', token)
+        setToken(token)
+      }
+
+      if (user) {
+        localStorage.setItem('authUser', JSON.stringify(user))
+        setUser(user)
+      } else {
+        localStorage.removeItem('authUser')
+      }
     } finally {
       setIsLoading(false)
     }

@@ -58,6 +58,17 @@ builder.Services.AddIdentity<User, IdentityRole<Guid>>(options =>
 // Add services to the container.
 builder.Services.AddControllers();
 
+// Add CORS policy to allow any origin
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 // Add MediatR
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(StackShare.Application.AssemblyReference).Assembly));
 
@@ -194,6 +205,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Add CORS middleware
+app.UseCors("AllowAll");
 
 // Add correlation ID middleware (before other middlewares)
 app.UseMiddleware<StackShare.API.Middleware.CorrelationIdMiddleware>();

@@ -79,6 +79,7 @@ export function LoginPage() {
                   id="email"
                   type="email"
                   placeholder="Enter your email"
+                  autoComplete="email"
                   className="mt-1"
                   {...register("email")}
                 />
@@ -95,6 +96,7 @@ export function LoginPage() {
                   id="password"
                   type="password"
                   placeholder="Enter your password"
+                  autoComplete="current-password"
                   className="mt-1"
                   {...register("password")}
                 />

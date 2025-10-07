@@ -95,6 +95,7 @@ export function RegisterPage() {
                   id="email"
                   type="email"
                   placeholder="Enter your email"
+                  autoComplete="email"
                   className="mt-1"
                   {...register("email")}
                 />
@@ -111,6 +112,7 @@ export function RegisterPage() {
                   id="password"
                   type="password"
                   placeholder="Enter your password"
+                  autoComplete="new-password"
                   className="mt-1"
                   {...register("password")}
                 />
@@ -127,6 +129,7 @@ export function RegisterPage() {
                   id="confirmPassword"
                   type="password"
                   placeholder="Confirm your password"
+                  autoComplete="new-password"
                   className="mt-1"
                   {...register("confirmPassword")}
                 />

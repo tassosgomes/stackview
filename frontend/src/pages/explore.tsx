@@ -21,13 +21,15 @@ const stackTypes: StackType[] = [
 export default function ExplorePage() {
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
-  const [typeFilter, setTypeFilter] = useState<string>('')
+  const [typeFilter, setTypeFilter] = useState<string>('__all__')
   const [technologyFilter, setTechnologyFilter] = useState('')
+
+  const resolvedTypeFilter = typeFilter && typeFilter !== '__all__' ? typeFilter : undefined
 
   const { data: stacksData, isLoading, isError } = usePublicStacks(
     page,
     12, // pageSize
-    typeFilter || undefined,
+    resolvedTypeFilter,
     technologyFilter || undefined
   )
 
@@ -107,7 +109,7 @@ export default function ExplorePage() {
                 <SelectValue placeholder="Tipo de Stack" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os tipos</SelectItem>
+                <SelectItem value="__all__">Todos os tipos</SelectItem>
                 {stackTypes.map((type) => (
                   <SelectItem key={type} value={type}>
                     {type}
